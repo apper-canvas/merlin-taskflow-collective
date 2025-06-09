@@ -1,0 +1,68 @@
+[
+  {
+    "id": "1",
+    "title": "Complete quarterly financial report",
+    "description": "Compile Q3 financial data, analyze performance metrics, and prepare executive summary for board presentation",
+    "category": "work",
+    "priority": 3,
+    "dueDate": "2024-01-15T09:00:00.000Z",
+    "completed": false,
+    "createdAt": "2024-01-10T08:30:00.000Z",
+    "completedAt": null
+  },
+  {
+    "id": "2",
+    "title": "Schedule dentist appointment",
+    "description": "Book routine dental cleaning and checkup for next month",
+    "category": "personal",
+    "priority": 2,
+    "dueDate": "2024-01-18T10:00:00.000Z",
+    "completed": false,
+    "createdAt": "2024-01-12T14:20:00.000Z",
+    "completedAt": null
+  },
+  {
+    "id": "3",
+    "title": "Review and respond to client proposals",
+    "description": "Analyze three new project proposals and provide detailed feedback and pricing estimates",
+    "category": "work",
+    "priority": 3,
+    "dueDate": "2024-01-16T17:00:00.000Z",
+    "completed": false,
+    "createdAt": "2024-01-11T11:15:00.000Z",
+    "completedAt": null
+  },
+  {
+    "id": "4",
+    "title": "Plan weekend hiking trip",
+    "description": "Research hiking trails, check weather forecast, and pack necessary gear for Saturday adventure",
+    "category": "personal",
+    "priority": 1,
+    "dueDate": "2024-01-19T08:00:00.000Z",
+    "completed": false,
+    "createdAt": "2024-01-13T16:45:00.000Z",
+    "completedAt": null
+  },
+  {
+    "id": "5",
+    "title": "Update project timeline",
+    "description": "Revise development milestones based on recent scope changes and communicate updates to stakeholders",
+    "category": "work",
+    "priority": 2,
+    "dueDate": "2024-01-17T12:00:00.000Z",
+    "completed": true,
+    "createdAt": "2024-01-09T09:30:00.000Z",
+    "completedAt": "2024-01-14T11:22:00.000Z"
+  },
+  {
+    "id": "6",
+    "title": "Buy groceries for meal prep",
+    "description": "Purchase ingredients for healthy meal prep: chicken, vegetables, quinoa, and fresh fruits",
+    "category": "personal",
+    "priority": 2,
+    "dueDate": "2024-01-14T18:00:00.000Z",
+    "completed": true,
+    "createdAt": "2024-01-13T07:15:00.000Z",
+    "completedAt": "2024-01-14T17:30:00.000Z"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "work",
+    "name": "Work",
+    "color": "#5B21B6",
+    "icon": "Briefcase"
+  },
+  {
+    "id": "personal",
+    "name": "Personal",
+    "color": "#10B981",
+    "icon": "User"
+  },
+  {
+    "id": "urgent",
+    "name": "Urgent",
+    "color": "#EF4444",
+    "icon": "AlertCircle"
+  },
+  {
+    "id": "health",
+    "name": "Health",
+    "color": "#3B82F6",
+    "icon": "Heart"
+  },
+  {
+    "id": "shopping",
+    "name": "Shopping",
+    "color": "#F59E0B",
+    "icon": "ShoppingCart"
+  }
+]
