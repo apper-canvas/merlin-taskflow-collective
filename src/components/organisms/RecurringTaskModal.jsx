@@ -169,7 +169,7 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
     switch (formData.pattern) {
       case 'daily':
         return (
-          <FormField label="Frequency" error={errors.frequency}>
+<FormField label="Frequency" error={errors.frequency}>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Every</span>
               <Input
@@ -178,6 +178,7 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
                 max="365"
                 value={formData.frequency}
                 onChange={(e) => setFormData({ ...formData, frequency: parseInt(e.target.value) || 1 })}
+                error={errors.frequency}
                 className="w-20 text-center"
               />
               <span className="text-sm text-gray-600">day(s)</span>
@@ -210,7 +211,7 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
 
       case 'monthly':
         return (
-          <FormField label="Day of Month" error={errors.dayOfMonth}>
+<FormField label="Day of Month" error={errors.dayOfMonth}>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">On the</span>
               <Input
@@ -219,6 +220,7 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
                 max="31"
                 value={formData.dayOfMonth}
                 onChange={(e) => setFormData({ ...formData, dayOfMonth: parseInt(e.target.value) || 1 })}
+                error={errors.dayOfMonth}
                 className="w-20 text-center"
               />
               <span className="text-sm text-gray-600">of each month</span>
@@ -283,12 +285,13 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
 
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField label="Start Date" error={errors.startDate}>
+<FormField label="Start Date" error={errors.startDate}>
                 <div className="relative">
                   <Input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    error={errors.startDate}
                   />
                   <ApperIcon name="Calendar" className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
@@ -300,6 +303,7 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    error={errors.endDate}
                     disabled={formData.endType !== 'date'}
                   />
                   <ApperIcon name="Calendar" className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />

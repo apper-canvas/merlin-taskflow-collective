@@ -8,6 +8,7 @@ import Textarea from '@/components/atoms/Textarea';
 import Select from '@/components/atoms/Select';
 import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
+import Spinner from '@/components/atoms/Spinner';
 import DeleteConfirmationModal from '@/components/organisms/DeleteConfirmationModal';
 import RecurringTaskModal from '@/components/organisms/RecurringTaskModal';
 
@@ -24,7 +25,8 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
-
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 useEffect(() => {
     if (task) {
       setFormData({
@@ -53,19 +55,52 @@ useEffect(() => {
     setShowRecurringModal(false); // Reset recurring modal state
   }, [task, isOpen]); // Also reset on modal open
 
-  const handleSubmit = (e) => {
+const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    
+    if (formData.title.length > 100) {
+      newErrors.title = 'Title must be 100 characters or less';
+    }
+    
+    if (formData.description.length > 500) {
+      newErrors.description = 'Description must be 500 characters or less';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title.trim()) return;
+    
+    if (!validateForm()) {
+      return;
+    }
 
-    const taskData = {
-      ...formData,
-      dueDate: new Date(formData.dueDate).toISOString()
-    };
+    setIsLoading(true);
+    setErrors({});
 
-    if (task) {
-      onSave(task.id, taskData);
-    } else {
-      onSave(taskData);
+    try {
+      const taskData = {
+        ...formData,
+        dueDate: new Date(formData.dueDate).toISOString()
+      };
+
+      if (task) {
+        await onSave(task.id, taskData);
+      } else {
+        await onSave(taskData);
+      }
+      
+      onClose();
+    } catch (error) {
+      setErrors({ submit: 'Failed to save task. Please try again.' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,8 +108,8 @@ useEffect(() => {
     if (task) {
       onDelete(task.id);
       setShowDeleteConfirm(false);
-      onClose(); // Close the main modal after deletion
-}
+      onClose();
+    }
   };
 
   const handleRecurringSave = (recurringConfig) => {
@@ -97,8 +132,8 @@ useEffect(() => {
       });
     }
   };
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-md w-full max-h-[90vh] overflow-y-auto">
+return (
+    <Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-lg w-full max-h-[90vh] overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
@@ -113,33 +148,38 @@ useEffect(() => {
             </Button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField label="Title" required>
+<form onSubmit={handleSubmit} className="space-y-6">
+            <FormField label="Title" required error={errors.title}>
               <Input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Enter task title..."
-                required
+                error={errors.title}
                 autoFocus
+                disabled={isLoading}
               />
             </FormField>
 
-            <FormField label="Description">
+            <FormField label="Description" error={errors.description}>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Add description..."
+                error={errors.description}
+                rows={3}
+                disabled={isLoading}
               />
             </FormField>
 
-            <div className="grid grid-cols-2 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Category">
                 <Select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  disabled={isLoading}
                 >
-                  {categories.map(category => (
+                  {categories?.map(category => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -151,6 +191,7 @@ useEffect(() => {
                 <Select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
+                  disabled={isLoading}
                 >
                   <option value={3}>High</option>
                   <option value={2}>Medium</option>
@@ -164,21 +205,23 @@ useEffect(() => {
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                disabled={isLoading}
               />
             </FormField>
 
-            {task && (
-              <div className="flex items-center">
+{task && (
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="completed"
                   checked={formData.completed}
                   onChange={(e) => setFormData({ ...formData, completed: e.target.checked })}
                   className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  disabled={isLoading}
                 />
-                <label htmlFor="completed" className="ml-2 text-sm text-gray-700">
+                <label htmlFor="completed" className="text-sm text-gray-700">
                   Mark as completed
                 </label>
-</div>
+              </div>
             )}
 
             {/* Recurring Task Option */}
@@ -220,14 +263,26 @@ useEffect(() => {
                   </div>
                 )}
               </div>
+)}
+
+            {/* Error Message */}
+            {errors.submit && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <ApperIcon name="AlertCircle" className="w-4 h-4 text-red-600" />
+                  <p className="text-sm text-red-700">{errors.submit}</p>
+                </div>
+              </div>
             )}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+
+            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
               <div>
                 {task && (
                   <Button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="px-3 py-2 text-error hover:bg-error/10 rounded-lg transition-colors text-sm font-medium"
+                    disabled={isLoading}
+                    className="px-3 py-2 text-error hover:bg-error/10 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
                   >
                     Delete Task
                   </Button>
@@ -238,17 +293,18 @@ useEffect(() => {
                 <Button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                  disabled={isLoading}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                  disabled={isLoading || !formData.title.trim()}
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
-                  {task ? 'Update' : 'Create'} Task
+                  {isLoading && <Spinner className="w-4 h-4" />}
+                  <span>{task ? 'Update' : 'Create'} Task</span>
                 </Button>
               </div>
             </div>
