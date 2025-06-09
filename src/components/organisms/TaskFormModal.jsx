@@ -133,10 +133,11 @@ const validateForm = () => {
     }
   };
 return (
-    <Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-lg w-full max-h-[90vh] overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+    <Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-lg w-full">
+      <div className="bg-white rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
             <h2 className="text-lg font-display font-semibold text-gray-900">
               {task ? 'Edit Task' : 'Create Task'}
             </h2>
@@ -147,8 +148,11 @@ return (
               <ApperIcon name="X" className="w-5 h-5" />
             </Button>
           </div>
+        </div>
 
-<form onSubmit={handleSubmit} className="space-y-6">
+        {/* Scrollable Form Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <FormField label="Title" required error={errors.title}>
               <Input
                 type="text"
@@ -172,7 +176,7 @@ return (
               />
             </FormField>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Category">
                 <Select
                   value={formData.category}
@@ -209,7 +213,7 @@ return (
               />
             </FormField>
 
-{task && (
+            {task && (
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="completed"
@@ -263,7 +267,7 @@ return (
                   </div>
                 )}
               </div>
-)}
+            )}
 
             {/* Error Message */}
             {errors.submit && (
@@ -274,41 +278,45 @@ return (
                 </div>
               </div>
             )}
+          </form>
+        </div>
 
-            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-              <div>
-                {task && (
-                  <Button
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={isLoading}
-                    className="px-3 py-2 text-error hover:bg-error/10 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
-                  >
-                    Delete Task
-                  </Button>
-                )}
-              </div>
-
-              <div className="flex space-x-3">
+        {/* Fixed Footer */}
+        <div className="flex-shrink-0 p-6 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              {task && (
                 <Button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => setShowDeleteConfirm(true)}
                   disabled={isLoading}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
+                  className="px-3 py-2 text-error hover:bg-error/10 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
                 >
-                  Cancel
+                  Delete Task
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading || !formData.title.trim()}
-                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  {isLoading && <Spinner className="w-4 h-4" />}
-                  <span>{task ? 'Update' : 'Create'} Task</span>
-                </Button>
-              </div>
+              )}
             </div>
-          </form>
+
+            <div className="flex space-x-3">
+              <Button
+                type="button"
+                onClick={onClose}
+                disabled={isLoading}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading || !formData.title.trim()}
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                onClick={handleSubmit}
+              >
+                {isLoading && <Spinner className="w-4 h-4" />}
+                <span>{task ? 'Update' : 'Create'} Task</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

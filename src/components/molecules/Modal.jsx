@@ -14,14 +14,16 @@ const Modal = ({ isOpen, onClose, children, contentClassName, backdropClassName,
             style={{ zIndex: zIndex }}
             onClick={onClose}
           />
-          <motion.div
+<motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`fixed inset-0 flex items-center justify-center p-4 ${contentClassName || ''}`}
+            className={`fixed inset-0 flex items-center justify-center p-4 pointer-events-none ${contentClassName || ''}`}
             style={{ zIndex: zIndex }}
           >
-            {children}
+            <div className="pointer-events-auto">
+              {children}
+            </div>
           </motion.div>
         </>
       )}
