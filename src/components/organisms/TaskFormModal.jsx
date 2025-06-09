@@ -9,6 +9,7 @@ import Select from '@/components/atoms/Select';
 import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
 import DeleteConfirmationModal from '@/components/organisms/DeleteConfirmationModal';
+import RecurringTaskModal from '@/components/organisms/RecurringTaskModal';
 
 const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) => {
   const [formData, setFormData] = useState({
@@ -17,11 +18,14 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
     category: 'personal',
     priority: 2,
     dueDate: format(new Date(), 'yyyy-MM-dd'),
-    completed: false
+    completed: false,
+    isRecurring: false,
+    recurringConfig: null
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showRecurringModal, setShowRecurringModal] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     if (task) {
       setFormData({
         title: task.title,
@@ -29,7 +33,9 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
         category: task.category,
         priority: task.priority,
         dueDate: format(new Date(task.dueDate), 'yyyy-MM-dd'),
-        completed: task.completed
+        completed: task.completed,
+        isRecurring: task.isRecurring || false,
+        recurringConfig: task.recurringConfig || null
       });
     } else {
       setFormData({
@@ -38,10 +44,13 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
         category: 'personal',
         priority: 2,
         dueDate: format(new Date(), 'yyyy-MM-dd'),
-        completed: false
+        completed: false,
+        isRecurring: false,
+        recurringConfig: null
       });
     }
     setShowDeleteConfirm(false); // Reset confirmation state
+    setShowRecurringModal(false); // Reset recurring modal state
   }, [task, isOpen]); // Also reset on modal open
 
   const handleSubmit = (e) => {
@@ -65,9 +74,29 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
       onDelete(task.id);
       setShowDeleteConfirm(false);
       onClose(); // Close the main modal after deletion
-    }
+}
   };
 
+  const handleRecurringSave = (recurringConfig) => {
+    setFormData({
+      ...formData,
+      isRecurring: true,
+      recurringConfig
+    });
+    setShowRecurringModal(false);
+  };
+
+  const handleRecurringToggle = (checked) => {
+    if (checked) {
+      setShowRecurringModal(true);
+    } else {
+      setFormData({
+        ...formData,
+        isRecurring: false,
+        recurringConfig: null
+      });
+    }
+  };
   return (
     <Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-md w-full max-h-[90vh] overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl">
@@ -149,9 +178,49 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
                 <label htmlFor="completed" className="ml-2 text-sm text-gray-700">
                   Mark as completed
                 </label>
-              </div>
+</div>
             )}
 
+            {/* Recurring Task Option */}
+            {!task && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ApperIcon name="RotateCcw" className="w-4 h-4 text-gray-600" />
+                    <label className="text-sm font-medium text-gray-700">
+                      Make this a recurring task
+                    </label>
+                  </div>
+                  <Checkbox
+                    checked={formData.isRecurring}
+                    onChange={(e) => handleRecurringToggle(e.target.checked)}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  />
+                </div>
+                
+                {formData.isRecurring && formData.recurringConfig && (
+                  <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <ApperIcon name="Calendar" className="w-4 h-4 text-primary" />
+                        <span className="text-sm text-gray-700">
+                          {formData.recurringConfig.pattern === 'daily' && `Every ${formData.recurringConfig.frequency} day(s)`}
+                          {formData.recurringConfig.pattern === 'weekly' && `Weekly on ${formData.recurringConfig.daysOfWeek.join(', ')}`}
+                          {formData.recurringConfig.pattern === 'monthly' && `Monthly on day ${formData.recurringConfig.dayOfMonth}`}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => setShowRecurringModal(true)}
+                        className="text-xs text-primary hover:bg-primary/10 px-2 py-1 rounded transition-colors"
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
               <div>
                 {task && (
@@ -193,7 +262,14 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
         onConfirm={handleDelete}
         title="Delete Task"
         message="Are you sure you want to permanently delete this task? This action cannot be undone."
-        confirmText="Delete"
+confirmText="Delete"
+      />
+
+      <RecurringTaskModal
+        isOpen={showRecurringModal}
+        onClose={() => setShowRecurringModal(false)}
+        onSave={handleRecurringSave}
+        initialData={formData.recurringConfig}
       />
     </Modal>
   );
