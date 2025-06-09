@@ -1,6 +1,6 @@
-import Home from '../pages/Home';
-import Archive from '../pages/Archive';
-import NotFound from '../pages/NotFound';
+import HomePage from '@/components/pages/HomePage';
+import ArchivePage from '@/components/pages/ArchivePage';
+import NotFoundPage from '@/components/pages/NotFoundPage';
 
 export const routes = {
   home: {
@@ -8,21 +8,21 @@ export const routes = {
     label: 'Tasks',
     path: '/',
     icon: 'CheckSquare',
-    component: Home
+component: HomePage
   },
   archive: {
     id: 'archive',
     label: 'Archive',
     path: '/archive',
     icon: 'Archive',
-    component: Archive
+component: ArchivePage
   },
   notFound: {
     id: 'notFound',
     label: 'Not Found',
     path: '/404',
     icon: 'AlertCircle',
-    component: NotFound
+component: NotFoundPage
   }
 };
 
