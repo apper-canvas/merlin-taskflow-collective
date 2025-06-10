@@ -10,7 +10,6 @@ import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
 import Spinner from '@/components/atoms/Spinner';
 import DeleteConfirmationModal from '@/components/organisms/DeleteConfirmationModal';
-import RecurringTaskModal from '@/components/organisms/RecurringTaskModal';
 
 const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) => {
   const [formData, setFormData] = useState({
@@ -23,8 +22,7 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
     isRecurring: false,
     recurringConfig: null
   });
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showRecurringModal, setShowRecurringModal] = useState(false);
+const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 useEffect(() => {
@@ -51,8 +49,7 @@ useEffect(() => {
         recurringConfig: null
       });
     }
-    setShowDeleteConfirm(false); // Reset confirmation state
-    setShowRecurringModal(false); // Reset recurring modal state
+setShowDeleteConfirm(false); // Reset confirmation state
   }, [task, isOpen]); // Also reset on modal open
 
 const validateForm = () => {
@@ -112,18 +109,22 @@ const validateForm = () => {
     }
   };
 
-  const handleRecurringSave = (recurringConfig) => {
-    setFormData({
-      ...formData,
-      isRecurring: true,
-      recurringConfig
-    });
-    setShowRecurringModal(false);
-  };
-
-  const handleRecurringToggle = (checked) => {
+const handleRecurringToggle = (checked) => {
     if (checked) {
-      setShowRecurringModal(true);
+      const defaultConfig = {
+        pattern: 'daily',
+        frequency: 1,
+        startDate: formData.dueDate,
+        endType: 'never',
+        endDate: null,
+        endAfter: 10
+      };
+      
+      setFormData({
+        ...formData,
+        isRecurring: true,
+        recurringConfig: defaultConfig
+      });
     } else {
       setFormData({
         ...formData,
@@ -131,6 +132,42 @@ const validateForm = () => {
         recurringConfig: null
       });
     }
+  };
+
+  const validateRecurrence = () => {
+    const newErrors = {};
+    
+    if (formData.isRecurring && formData.recurringConfig) {
+      const config = formData.recurringConfig;
+      
+      // Validate frequency
+      if (!config.frequency || config.frequency < 1 || config.frequency > 365) {
+        newErrors.recurrenceInterval = 'Interval must be between 1 and 365';
+      }
+      
+      // Validate weekly days selection
+      if (config.pattern === 'weekly' && (!config.daysOfWeek || config.daysOfWeek.length === 0)) {
+        newErrors.recurrenceDays = 'Please select at least one day of the week';
+      }
+      
+      // Validate end date
+      if (config.endType === 'date') {
+        if (!config.endDate) {
+          newErrors.recurrenceEnd = 'Please specify an end date';
+        } else if (new Date(config.endDate) <= new Date(formData.dueDate)) {
+          newErrors.recurrenceEnd = 'End date must be after the start date';
+        }
+      }
+      
+      // Validate end after count
+      if (config.endType === 'after') {
+        if (!config.endAfter || config.endAfter < 1 || config.endAfter > 100) {
+          newErrors.recurrenceEnd = 'Number of occurrences must be between 1 and 100';
+        }
+      }
+    }
+    
+    return newErrors;
   };
 return (
 <Modal isOpen={isOpen} onClose={onClose} contentClassName="w-screen h-screen">
@@ -228,7 +265,7 @@ return (
               </div>
             )}
 
-            {/* Recurring Task Option */}
+{/* Recurring Task Configuration */}
             {!task && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -242,28 +279,288 @@ return (
                     checked={formData.isRecurring}
                     onChange={(e) => handleRecurringToggle(e.target.checked)}
                     className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                    disabled={isLoading}
                   />
                 </div>
                 
-                {formData.isRecurring && formData.recurringConfig && (
-                  <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <ApperIcon name="Calendar" className="w-4 h-4 text-primary" />
-                        <span className="text-sm text-gray-700">
-                          {formData.recurringConfig.pattern === 'daily' && `Every ${formData.recurringConfig.frequency} day(s)`}
-                          {formData.recurringConfig.pattern === 'weekly' && `Weekly on ${formData.recurringConfig.daysOfWeek.join(', ')}`}
-                          {formData.recurringConfig.pattern === 'monthly' && `Monthly on day ${formData.recurringConfig.dayOfMonth}`}
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={() => setShowRecurringModal(true)}
-                        className="text-xs text-primary hover:bg-primary/10 px-2 py-1 rounded transition-colors"
-                      >
-                        Edit
-                      </Button>
+                {formData.isRecurring && (
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-4">
+                    <h4 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                      <ApperIcon name="Calendar" className="w-4 h-4 text-primary" />
+                      <span>Recurrence Settings</span>
+                    </h4>
+                    
+                    {/* Frequency Selection */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField label="Frequency" required error={errors.recurrenceFrequency}>
+                        <Select
+                          value={formData.recurringConfig?.pattern || 'daily'}
+                          onChange={(e) => {
+                            const pattern = e.target.value;
+                            const defaultConfig = {
+                              pattern,
+                              frequency: 1,
+                              startDate: formData.dueDate,
+                              endType: 'never',
+                              endDate: null,
+                              endAfter: 10
+                            };
+                            
+                            if (pattern === 'weekly') {
+                              defaultConfig.daysOfWeek = [format(new Date(formData.dueDate), 'EEEE').toLowerCase()];
+                            } else if (pattern === 'monthly') {
+                              defaultConfig.dayOfMonth = new Date(formData.dueDate).getDate();
+                              defaultConfig.monthlyType = 'dayOfMonth';
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              recurringConfig: defaultConfig
+                            });
+                          }}
+                          disabled={isLoading}
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="yearly">Yearly</option>
+                          <option value="custom">Custom</option>
+                        </Select>
+                      </FormField>
+                      
+                      <FormField label="Interval" error={errors.recurrenceInterval}>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-600">Every</span>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="365"
+                            value={formData.recurringConfig?.frequency || 1}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringConfig: {
+                                ...formData.recurringConfig,
+                                frequency: parseInt(e.target.value) || 1
+                              }
+                            })}
+                            className="w-20"
+                            disabled={isLoading}
+                          />
+                          <span className="text-sm text-gray-600">
+                            {formData.recurringConfig?.pattern === 'daily' && (formData.recurringConfig?.frequency === 1 ? 'day' : 'days')}
+                            {formData.recurringConfig?.pattern === 'weekly' && (formData.recurringConfig?.frequency === 1 ? 'week' : 'weeks')}
+                            {formData.recurringConfig?.pattern === 'monthly' && (formData.recurringConfig?.frequency === 1 ? 'month' : 'months')}
+                            {formData.recurringConfig?.pattern === 'yearly' && (formData.recurringConfig?.frequency === 1 ? 'year' : 'years')}
+                            {formData.recurringConfig?.pattern === 'custom' && 'period(s)'}
+                          </span>
+                        </div>
+                      </FormField>
                     </div>
+                    
+                    {/* Weekly specific options */}
+                    {formData.recurringConfig?.pattern === 'weekly' && (
+                      <FormField label="Days of Week" required error={errors.recurrenceDays}>
+                        <div className="flex flex-wrap gap-2">
+                          {['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].map(day => (
+                            <label key={day} className="flex items-center space-x-1 text-sm">
+                              <Checkbox
+                                checked={formData.recurringConfig?.daysOfWeek?.includes(day) || false}
+                                onChange={(e) => {
+                                  const currentDays = formData.recurringConfig?.daysOfWeek || [];
+                                  const newDays = e.target.checked
+                                    ? [...currentDays, day]
+                                    : currentDays.filter(d => d !== day);
+                                  
+                                  setFormData({
+                                    ...formData,
+                                    recurringConfig: {
+                                      ...formData.recurringConfig,
+                                      daysOfWeek: newDays
+                                    }
+                                  });
+                                }}
+                                className="w-3 h-3"
+                                disabled={isLoading}
+                              />
+                              <span className="capitalize">{day.slice(0, 3)}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </FormField>
+                    )}
+                    
+                    {/* Monthly specific options */}
+                    {formData.recurringConfig?.pattern === 'monthly' && (
+                      <div className="space-y-3">
+                        <FormField label="Monthly Recurrence Type">
+                          <div className="space-y-2">
+                            <label className="flex items-center space-x-2 text-sm">
+                              <input
+                                type="radio"
+                                name="monthlyType"
+                                value="dayOfMonth"
+                                checked={formData.recurringConfig?.monthlyType === 'dayOfMonth'}
+                                onChange={(e) => setFormData({
+                                  ...formData,
+                                  recurringConfig: {
+                                    ...formData.recurringConfig,
+                                    monthlyType: e.target.value,
+                                    dayOfMonth: new Date(formData.dueDate).getDate()
+                                  }
+                                })}
+                                className="w-3 h-3"
+                                disabled={isLoading}
+                              />
+                              <span>On day {new Date(formData.dueDate).getDate()} of each month</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm">
+                              <input
+                                type="radio"
+                                name="monthlyType"
+                                value="weekOfMonth"
+                                checked={formData.recurringConfig?.monthlyType === 'weekOfMonth'}
+                                onChange={(e) => setFormData({
+                                  ...formData,
+                                  recurringConfig: {
+                                    ...formData.recurringConfig,
+                                    monthlyType: e.target.value
+                                  }
+                                })}
+                                className="w-3 h-3"
+                                disabled={isLoading}
+                              />
+                              <span>On the {Math.ceil(new Date(formData.dueDate).getDate() / 7)} {format(new Date(formData.dueDate), 'EEEE')} of each month</span>
+                            </label>
+                          </div>
+                        </FormField>
+                      </div>
+                    )}
+                    
+                    {/* End Date Options */}
+                    <FormField label="End Recurrence" error={errors.recurrenceEnd}>
+                      <div className="space-y-3">
+                        <label className="flex items-center space-x-2 text-sm">
+                          <input
+                            type="radio"
+                            name="endType"
+                            value="never"
+                            checked={formData.recurringConfig?.endType === 'never'}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringConfig: {
+                                ...formData.recurringConfig,
+                                endType: e.target.value
+                              }
+                            })}
+                            className="w-3 h-3"
+                            disabled={isLoading}
+                          />
+                          <span>Never</span>
+                        </label>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="endType"
+                            value="date"
+                            checked={formData.recurringConfig?.endType === 'date'}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringConfig: {
+                                ...formData.recurringConfig,
+                                endType: e.target.value
+                              }
+                            })}
+                            className="w-3 h-3"
+                            disabled={isLoading}
+                          />
+                          <span className="text-sm">On</span>
+                          <Input
+                            type="date"
+                            value={formData.recurringConfig?.endDate || ''}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringConfig: {
+                                ...formData.recurringConfig,
+                                endDate: e.target.value,
+                                endType: 'date'
+                              }
+                            })}
+                            className="w-auto"
+                            disabled={isLoading || formData.recurringConfig?.endType !== 'date'}
+                            min={formData.dueDate}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="endType"
+                            value="after"
+                            checked={formData.recurringConfig?.endType === 'after'}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringConfig: {
+                                ...formData.recurringConfig,
+                                endType: e.target.value
+                              }
+                            })}
+                            className="w-3 h-3"
+                            disabled={isLoading}
+                          />
+                          <span className="text-sm">After</span>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={formData.recurringConfig?.endAfter || 10}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringConfig: {
+                                ...formData.recurringConfig,
+                                endAfter: parseInt(e.target.value) || 10,
+                                endType: 'after'
+                              }
+                            })}
+                            className="w-20"
+                            disabled={isLoading || formData.recurringConfig?.endType !== 'after'}
+                          />
+                          <span className="text-sm">occurrences</span>
+                        </div>
+                      </div>
+                    </FormField>
+                    
+                    {/* Custom recurrence note */}
+                    {formData.recurringConfig?.pattern === 'custom' && (
+                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <ApperIcon name="Info" className="w-4 h-4 text-yellow-600" />
+                          <p className="text-sm text-yellow-700">
+                            Custom recurrence patterns allow for complex scheduling. Tasks will be created based on the interval specified.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Recurrence Summary */}
+                    {formData.recurringConfig && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <ApperIcon name="Calendar" className="w-4 h-4 text-blue-600" />
+                          <div className="text-sm text-blue-700">
+                            <strong>Summary:</strong> {' '}
+                            {formData.recurringConfig.pattern === 'daily' && `Every ${formData.recurringConfig.frequency} day${formData.recurringConfig.frequency > 1 ? 's' : ''}`}
+                            {formData.recurringConfig.pattern === 'weekly' && `Every ${formData.recurringConfig.frequency} week${formData.recurringConfig.frequency > 1 ? 's' : ''} on ${formData.recurringConfig.daysOfWeek?.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', ') || 'selected days'}`}
+                            {formData.recurringConfig.pattern === 'monthly' && `Every ${formData.recurringConfig.frequency} month${formData.recurringConfig.frequency > 1 ? 's' : ''}`}
+                            {formData.recurringConfig.pattern === 'yearly' && `Every ${formData.recurringConfig.frequency} year${formData.recurringConfig.frequency > 1 ? 's' : ''}`}
+                            {formData.recurringConfig.pattern === 'custom' && `Custom pattern every ${formData.recurringConfig.frequency} period${formData.recurringConfig.frequency > 1 ? 's' : ''}`}
+                            {formData.recurringConfig.endType === 'date' && `, until ${format(new Date(formData.recurringConfig.endDate), 'MMM d, yyyy')}`}
+                            {formData.recurringConfig.endType === 'after' && `, for ${formData.recurringConfig.endAfter} occurrences`}
+                            {formData.recurringConfig.endType === 'never' && ', indefinitely'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -329,12 +626,6 @@ return (
 confirmText="Delete"
       />
 
-      <RecurringTaskModal
-        isOpen={showRecurringModal}
-        onClose={() => setShowRecurringModal(false)}
-        onSave={handleRecurringSave}
-        initialData={formData.recurringConfig}
-      />
     </Modal>
   );
 };

@@ -55,8 +55,11 @@ const TaskCard = ({ task, categoryInfo, onToggleComplete, onClick, index }) => {
           </div>
 
           <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center space-x-4 text-xs text-gray-500">
+<div className="flex items-center space-x-4 text-xs text-gray-500">
               <div className="flex items-center space-x-1">
+                {task.isRecurring && (
+                  <ApperIcon name="RotateCcw" className="w-3 h-3 text-primary" title="Recurring task" />
+                )}
                 <ApperIcon name="Calendar" className="w-3 h-3" />
                 <span className={isOverdue ? 'text-error font-medium' : ''}>
                   Due: {isToday(new Date(task.dueDate))
