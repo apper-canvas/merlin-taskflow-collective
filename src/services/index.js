@@ -1,13 +1,12 @@
 // Export all services from this central location
-export { taskService } from './api/taskService';
-export { projectService } from './api/projectService';
-export { categoryService } from './api/categoryService';
-export { dealsService } from './api/dealsService';
-
+export { default as taskService } from './api/taskService';
+export { default as projectService } from './api/projectService';
+export { default as categoryService } from './api/categoryService';
+export { default as dealsService } from './api/dealsService';
 // Import default exports first for backward compatibility
-export { default as taskServiceDefault } from './api/taskService.js';
-export { default as categoryServiceDefault } from './api/categoryService.js';
-export { default as projectServiceDefault } from './api/projectService.js';
+import taskServiceDefault from './api/taskService.js';
+import categoryServiceDefault from './api/categoryService.js';
+import projectServiceDefault from './api/projectService.js';
 
 // Re-export as named exports for convenient importing (using imported defaults)
 export const taskServiceAlt = taskServiceDefault;
