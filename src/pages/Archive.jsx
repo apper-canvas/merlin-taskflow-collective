@@ -28,8 +28,8 @@ function Archive() {
       setTasks(tasksData);
       setCategories(categoriesData);
     } catch (err) {
-      setError(err.message || 'Failed to load data');
-      toast.error('Failed to load archived tasks');
+setError(err.message || 'Failed to load data');
+      toast.error('Failed to load archived work items');
     } finally {
       setLoading(false);
     }
@@ -39,21 +39,21 @@ function Archive() {
     try {
       const updatedTask = await taskService.update(taskId, { completed: false });
       setTasks(prev => prev.map(task => 
-        task.id === taskId ? updatedTask : task
+task.id === taskId ? updatedTask : task
       ));
-      toast.success('Task restored successfully');
+      toast.success('Work item restored successfully');
     } catch (err) {
-      toast.error('Failed to restore task');
+      toast.error('Failed to restore work item');
     }
   };
 
   const handleDeleteTask = async (taskId) => {
     try {
-      await taskService.delete(taskId);
+await taskService.delete(taskId);
       setTasks(prev => prev.filter(task => task.id !== taskId));
-      toast.success('Task permanently deleted');
+      toast.success('Work item permanently deleted');
     } catch (err) {
-      toast.error('Failed to delete task');
+      toast.error('Failed to delete work item');
     }
   };
 
@@ -131,17 +131,17 @@ function Archive() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div>
             <h1 className="text-2xl font-display font-bold text-gray-900">Archive</h1>
-            <p className="text-gray-600">
-              {completedTasks.length} completed task{completedTasks.length !== 1 ? 's' : ''}
+<p className="text-gray-600">
+              {completedTasks.length} completed work item{completedTasks.length !== 1 ? 's' : ''}
             </p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <ApperIcon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
+<input
                 type="text"
-                placeholder="Search completed tasks..."
+                placeholder="Search completed work items..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all w-full sm:w-64"
@@ -179,11 +179,11 @@ function Archive() {
               animate={{ y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 3 }}
             >
-              <ApperIcon name="Archive" className="w-16 h-16 text-gray-300 mx-auto" />
+<ApperIcon name="Archive" className="w-16 h-16 text-gray-300 mx-auto" />
             </motion.div>
-            <h3 className="mt-4 text-lg font-medium">No completed tasks</h3>
+            <h3 className="mt-4 text-lg font-medium">No completed work items</h3>
             <p className="mt-2 text-gray-500">
-              {searchQuery ? 'No completed tasks match your search' : 'Completed tasks will appear here'}
+              {searchQuery ? 'No completed work items match your search' : 'Completed work items will appear here'}
             </p>
           </motion.div>
         ) : (

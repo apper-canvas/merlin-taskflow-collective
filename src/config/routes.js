@@ -3,9 +3,9 @@ import ArchivePage from '@/components/pages/ArchivePage';
 import NotFoundPage from '@/components/pages/NotFoundPage';
 
 export const routes = {
-  home: {
+home: {
     id: 'home',
-    label: 'Tasks',
+    label: 'Work Items',
     path: '/',
     icon: 'CheckSquare',
 component: HomePage
