@@ -170,17 +170,19 @@ const handleRecurringToggle = (checked) => {
     return newErrors;
   };
 return (
-<Modal isOpen={isOpen} onClose={onClose} contentClassName="w-screen h-screen">
-      <div className="bg-white w-screen h-screen flex flex-col">
+<Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-4xl mx-auto my-8">
+      <div className="bg-white rounded-xl shadow-2xl border border-gray-100 max-h-[90vh] flex flex-col">
         {/* Fixed Header */}
-        <div className="flex-shrink-0 p-6 border-b border-gray-200">
+        <div className="flex-shrink-0 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-display font-semibold text-gray-900">
+            <h2 className="text-xl font-display font-semibold text-gray-900">
               {task ? 'Edit Task' : 'Create Task'}
             </h2>
             <Button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-200 rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <ApperIcon name="X" className="w-5 h-5" />
             </Button>
@@ -188,8 +190,8 @@ return (
         </div>
 
         {/* Scrollable Form Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <FormField label="Title" required error={errors.title}>
               <Input
                 type="text"
@@ -213,7 +215,7 @@ return (
               />
             </FormField>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Category">
                 <Select
                   value={formData.category}
@@ -251,7 +253,7 @@ return (
             </FormField>
 
             {task && (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <Checkbox
                   id="completed"
                   checked={formData.completed}
@@ -259,7 +261,7 @@ return (
                   className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                   disabled={isLoading}
                 />
-                <label htmlFor="completed" className="text-sm text-gray-700">
+                <label htmlFor="completed" className="text-sm font-medium text-gray-700 cursor-pointer">
                   Mark as completed
                 </label>
               </div>
@@ -268,10 +270,10 @@ return (
 {/* Recurring Task Configuration */}
             {!task && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ApperIcon name="RotateCcw" className="w-4 h-4 text-gray-600" />
-                    <label className="text-sm font-medium text-gray-700">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <ApperIcon name="RotateCcw" className="w-5 h-5 text-primary" />
+                    <label className="text-sm font-semibold text-gray-800 cursor-pointer">
                       Make this a recurring task
                     </label>
                   </div>
@@ -284,14 +286,14 @@ return (
                 </div>
                 
                 {formData.isRecurring && (
-                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-4">
-                    <h4 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
-                      <ApperIcon name="Calendar" className="w-4 h-4 text-primary" />
+                  <div className="p-5 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border border-primary/20 rounded-xl space-y-5 shadow-sm">
+                    <h4 className="text-base font-semibold text-gray-800 flex items-center space-x-2">
+                      <ApperIcon name="Calendar" className="w-5 h-5 text-primary" />
                       <span>Recurrence Settings</span>
                     </h4>
                     
                     {/* Frequency Selection */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField label="Frequency" required error={errors.recurrenceFrequency}>
                         <Select
                           value={formData.recurringConfig?.pattern || 'daily'}
@@ -330,7 +332,7 @@ return (
                       
                       <FormField label="Interval" error={errors.recurrenceInterval}>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600">Every</span>
+                          <span className="text-sm font-medium text-gray-600">Every</span>
                           <Input
                             type="number"
                             min="1"
@@ -346,7 +348,7 @@ return (
                             className="w-20"
                             disabled={isLoading}
                           />
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm font-medium text-gray-600">
                             {formData.recurringConfig?.pattern === 'daily' && (formData.recurringConfig?.frequency === 1 ? 'day' : 'days')}
                             {formData.recurringConfig?.pattern === 'weekly' && (formData.recurringConfig?.frequency === 1 ? 'week' : 'weeks')}
                             {formData.recurringConfig?.pattern === 'monthly' && (formData.recurringConfig?.frequency === 1 ? 'month' : 'months')}
@@ -360,9 +362,9 @@ return (
                     {/* Weekly specific options */}
                     {formData.recurringConfig?.pattern === 'weekly' && (
                       <FormField label="Days of Week" required error={errors.recurrenceDays}>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-3">
                           {['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].map(day => (
-                            <label key={day} className="flex items-center space-x-1 text-sm">
+                            <label key={day} className="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer hover:text-primary transition-colors">
                               <Checkbox
                                 checked={formData.recurringConfig?.daysOfWeek?.includes(day) || false}
                                 onChange={(e) => {
@@ -393,8 +395,8 @@ return (
                     {formData.recurringConfig?.pattern === 'monthly' && (
                       <div className="space-y-3">
                         <FormField label="Monthly Recurrence Type">
-                          <div className="space-y-2">
-                            <label className="flex items-center space-x-2 text-sm">
+                          <div className="space-y-3 p-3 bg-white rounded-lg border border-gray-200">
+                            <label className="flex items-center space-x-3 text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors">
                               <input
                                 type="radio"
                                 name="monthlyType"
@@ -408,12 +410,12 @@ return (
                                     dayOfMonth: new Date(formData.dueDate).getDate()
                                   }
                                 })}
-                                className="w-3 h-3"
+                                className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
                                 disabled={isLoading}
                               />
                               <span>On day {new Date(formData.dueDate).getDate()} of each month</span>
                             </label>
-                            <label className="flex items-center space-x-2 text-sm">
+                            <label className="flex items-center space-x-3 text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors">
                               <input
                                 type="radio"
                                 name="monthlyType"
@@ -426,7 +428,7 @@ return (
                                     monthlyType: e.target.value
                                   }
                                 })}
-                                className="w-3 h-3"
+                                className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
                                 disabled={isLoading}
                               />
                               <span>On the {Math.ceil(new Date(formData.dueDate).getDate() / 7)} {format(new Date(formData.dueDate), 'EEEE')} of each month</span>
@@ -438,8 +440,8 @@ return (
                     
                     {/* End Date Options */}
                     <FormField label="End Recurrence" error={errors.recurrenceEnd}>
-                      <div className="space-y-3">
-                        <label className="flex items-center space-x-2 text-sm">
+                      <div className="space-y-3 p-3 bg-white rounded-lg border border-gray-200">
+                        <label className="flex items-center space-x-3 text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors">
                           <input
                             type="radio"
                             name="endType"
@@ -452,13 +454,13 @@ return (
                                 endType: e.target.value
                               }
                             })}
-                            className="w-3 h-3"
+                            className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
                             disabled={isLoading}
                           />
                           <span>Never</span>
                         </label>
                         
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3 hover:bg-gray-50 p-2 rounded-md transition-colors">
                           <input
                             type="radio"
                             name="endType"
@@ -471,10 +473,10 @@ return (
                                 endType: e.target.value
                               }
                             })}
-                            className="w-3 h-3"
+                            className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
                             disabled={isLoading}
                           />
-                          <span className="text-sm">On</span>
+                          <span className="text-sm font-medium text-gray-700">On</span>
                           <Input
                             type="date"
                             value={formData.recurringConfig?.endDate || ''}
@@ -492,7 +494,7 @@ return (
                           />
                         </div>
                         
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3 hover:bg-gray-50 p-2 rounded-md transition-colors">
                           <input
                             type="radio"
                             name="endType"
@@ -505,10 +507,10 @@ return (
                                 endType: e.target.value
                               }
                             })}
-                            className="w-3 h-3"
+                            className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
                             disabled={isLoading}
                           />
-                          <span className="text-sm">After</span>
+                          <span className="text-sm font-medium text-gray-700">After</span>
                           <Input
                             type="number"
                             min="1"
@@ -525,17 +527,17 @@ return (
                             className="w-20"
                             disabled={isLoading || formData.recurringConfig?.endType !== 'after'}
                           />
-                          <span className="text-sm">occurrences</span>
+                          <span className="text-sm font-medium text-gray-700">occurrences</span>
                         </div>
                       </div>
                     </FormField>
                     
                     {/* Custom recurrence note */}
                     {formData.recurringConfig?.pattern === 'custom' && (
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <ApperIcon name="Info" className="w-4 h-4 text-yellow-600" />
-                          <p className="text-sm text-yellow-700">
+                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg shadow-sm">
+                        <div className="flex items-start space-x-3">
+                          <ApperIcon name="Info" className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-yellow-700 leading-relaxed">
                             Custom recurrence patterns allow for complex scheduling. Tasks will be created based on the interval specified.
                           </p>
                         </div>
@@ -544,11 +546,11 @@ return (
                     
                     {/* Recurrence Summary */}
                     {formData.recurringConfig && (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <ApperIcon name="Calendar" className="w-4 h-4 text-blue-600" />
-                          <div className="text-sm text-blue-700">
-                            <strong>Summary:</strong> {' '}
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+                        <div className="flex items-start space-x-3">
+                          <ApperIcon name="Calendar" className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-sm text-blue-700 leading-relaxed">
+                            <strong className="font-semibold">Summary:</strong> {' '}
                             {formData.recurringConfig.pattern === 'daily' && `Every ${formData.recurringConfig.frequency} day${formData.recurringConfig.frequency > 1 ? 's' : ''}`}
                             {formData.recurringConfig.pattern === 'weekly' && `Every ${formData.recurringConfig.frequency} week${formData.recurringConfig.frequency > 1 ? 's' : ''} on ${formData.recurringConfig.daysOfWeek?.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', ') || 'selected days'}`}
                             {formData.recurringConfig.pattern === 'monthly' && `Every ${formData.recurringConfig.frequency} month${formData.recurringConfig.frequency > 1 ? 's' : ''}`}
@@ -568,10 +570,10 @@ return (
 
             {/* Error Message */}
             {errors.submit && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <ApperIcon name="AlertCircle" className="w-4 h-4 text-red-600" />
-                  <p className="text-sm text-red-700">{errors.submit}</p>
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg shadow-sm">
+                <div className="flex items-start space-x-3">
+                  <ApperIcon name="AlertCircle" className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-700 leading-relaxed">{errors.submit}</p>
                 </div>
               </div>
             )}
@@ -579,7 +581,7 @@ return (
         </div>
 
         {/* Fixed Footer */}
-        <div className="flex-shrink-0 p-6 border-t border-gray-200">
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
           <div className="flex items-center justify-between">
             <div>
               {task && (
@@ -587,7 +589,9 @@ return (
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={isLoading}
-                  className="px-3 py-2 text-error hover:bg-error/10 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                  className="px-4 py-2 text-error hover:bg-error/10 rounded-lg transition-all duration-200 text-sm font-medium disabled:opacity-50 border border-error/20 hover:border-error/30"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Delete Task
                 </Button>
@@ -599,15 +603,19 @@ return (
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
+                className="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 font-medium disabled:opacity-50 border border-gray-200 hover:border-gray-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading || !formData.title.trim()}
-                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all duration-200 font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 onClick={handleSubmit}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 {isLoading && <Spinner className="w-4 h-4" />}
                 <span>{task ? 'Update' : 'Create'} Task</span>
