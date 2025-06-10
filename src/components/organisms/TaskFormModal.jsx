@@ -133,8 +133,8 @@ const validateForm = () => {
     }
   };
 return (
-    <Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-lg w-full">
-      <div className="bg-white rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+<Modal isOpen={isOpen} onClose={onClose} contentClassName="w-screen h-screen">
+      <div className="bg-white w-screen h-screen flex flex-col">
         {/* Fixed Header */}
         <div className="flex-shrink-0 p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
