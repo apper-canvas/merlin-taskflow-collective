@@ -1,109 +1,139 @@
-import React from 'react';
-import ApperIcon from '@/components/ApperIcon';
-import Input from '@/components/atoms/Input';
-import Select from '@/components/atoms/Select';
-import Button from '@/components/atoms/Button';
+import React from 'react'
+import PropTypes from 'prop-types'
+import ApperIcon from '@/components/ApperIcon'
+import Input from '@/components/atoms/Input'
+import Select from '@/components/atoms/Select'
+import Button from '@/components/atoms/Button'
 
 const PageHeader = ({
-  title,
-  subtitle,
-  searchQuery,
-  onSearchChange,
-  onSearchKeyDown,
-  selectedCategory,
-  onCategoryChange,
-  categories,
-  sortBy,
-  onSortByChange,
+  title = '',
+  subtitle = '',
+  searchQuery = '',
+  onSearchChange = () => {},
+  onSearchKeyDown = () => {},
+  selectedCategory = '',
+  onCategoryChange = () => {},
+  categories = [], // Default empty array to prevent map error
+  sortBy = '',
+  onSortByChange = () => {},
   showToggle = false,
-  toggleLabel,
-  onToggle,
-  toggleActive,
-  onAddClick,
-  addBtnText
+  toggleLabel = '',
+  onToggle = () => {},
+  toggleActive = false,
+  onAddClick = () => {},
+  addBtnText = 'Add'
 }) => {
-  return (
-<div className="flex-shrink-0 p-8 bg-white/95 backdrop-blur-lg border-b border-slate-200/60 shadow-sm">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-6 lg:space-y-0">
-        <div>
-          <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
-            {title}
-          </h1>
-          <p className="text-slate-600 font-medium">{subtitle}</p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative">
-            <ApperIcon name="Search" className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              type="text"
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={onSearchChange}
-              onKeyDown={onSearchKeyDown}
-              className="pl-12 pr-4 py-3 w-full sm:w-72 text-sm"
-            />
+  // Defensive check for categories array
+  const safeCategories = Array.isArray(categories) ? categories : [];
+return (
+    <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <ApperIcon />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{title || 'Untitled'}</h1>
+            {subtitle && (
+              <p className="text-sm text-gray-600 mt-1">{subtitle}</p>
+            )}
           </div>
-
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          {showToggle && toggleLabel && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">{toggleLabel}</span>
+              <button
+                onClick={onToggle}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  toggleActive ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
+                aria-label={`Toggle ${toggleLabel}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    toggleActive ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          )}
+          
           {onAddClick && (
             <Button
               onClick={onAddClick}
-              className="px-6 py-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white rounded-xl hover:from-accent-600 hover:to-accent-700 hover:scale-105 transition-all flex items-center space-x-2 font-semibold shadow-lg shadow-accent-500/25"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              <ApperIcon name="Plus" className="w-4 h-4" />
-              <span>{addBtnText || 'Add'}</span>
+              {addBtnText}
             </Button>
           )}
         </div>
       </div>
-
-      {/* Filters */}
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        <div className="min-w-48">
+      
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <Input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={onSearchChange}
+            onKeyDown={onSearchKeyDown}
+          />
+        </div>
+        
+        {safeCategories.length > 0 && (
           <Select
             value={selectedCategory}
             onChange={onCategoryChange}
-          >
-            <option value="all">All Categories</option>
-            {categories.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-
-{onSortByChange && (
-          <div className="min-w-48">
-            <Select
-              value={sortBy}
-              onChange={onSortByChange}
-            >
-              <option value="dueDate">Sort by Due Date</option>
-              <option value="priority">Sort by Priority</option>
-              <option value="created">Sort by Created</option>
-              <option value="discount">Sort by Discount</option>
-              <option value="expiry">Sort by Expiry Date</option>
-              <option value="category">Sort by Category</option>
-            </Select>
-          </div>
+options={[
+              { value: '', label: 'All Categories' },
+              ...safeCategories.map(cat => ({
+                value: cat?.id || '',
+                label: cat?.name || 'Unknown Category'
+              }))
+            ]}
+          />
         )}
-
-        {showToggle && (
-          <Button
-            onClick={onToggle}
-            className={`px-4 py-2.5 rounded-xl transition-all text-sm font-semibold ${
-              toggleActive
-                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
-          >
-            {toggleLabel}
-          </Button>
+        
+        {onSortByChange && (
+          <Select
+            value={sortBy}
+            onChange={onSortByChange}
+            options={[
+              { value: 'created', label: 'Date Created' },
+              { value: 'updated', label: 'Last Updated' },
+              { value: 'priority', label: 'Priority' },
+              { value: 'alphabetical', label: 'Alphabetical' }
+            ]}
+          />
         )}
-      </div>
+</div>
     </div>
-  );
-};
+  )
+}
+
+// PropTypes for development-time validation
+PageHeader.propTypes = {
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
+  searchQuery: PropTypes.string,
+  onSearchChange: PropTypes.func,
+  onSearchKeyDown: PropTypes.func,
+  selectedCategory: PropTypes.string,
+  onCategoryChange: PropTypes.func,
+  categories: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      name: PropTypes.string
+    })
+  ),
+  sortBy: PropTypes.string,
+  onSortByChange: PropTypes.func,
+  showToggle: PropTypes.bool,
+  toggleLabel: PropTypes.string,
+  onToggle: PropTypes.func,
+  toggleActive: PropTypes.bool,
+onAddClick: PropTypes.func,
+  addBtnText: PropTypes.string
+}
 
 export default PageHeader;
