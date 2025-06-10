@@ -16,11 +16,10 @@ function Layout() {
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Mobile Header */}
       <header className="flex-shrink-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:hidden z-40">
-        <div className="flex items-center space-x-3">
+<div className="flex items-center space-x-3">
           <ApperIcon name="CheckSquare" className="w-8 h-8 text-primary" />
-          <span className="text-xl font-display font-bold text-gray-900">TaskFlow</span>
+          <span className="text-xl font-display font-bold text-gray-900">WorkItemFlow</span>
         </div>
-        
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -33,9 +32,9 @@ function Layout() {
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col z-40">
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
+<div className="flex items-center space-x-3">
               <ApperIcon name="CheckSquare" className="w-8 h-8 text-primary" />
-              <span className="text-xl font-display font-bold text-gray-900">TaskFlow</span>
+              <span className="text-xl font-display font-bold text-gray-900">WorkItemFlow</span>
             </div>
           </div>
           

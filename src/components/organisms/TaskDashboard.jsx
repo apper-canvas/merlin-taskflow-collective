@@ -35,10 +35,10 @@ function TaskDashboard() {
         categoryService.getAll()
       ]);
       setTasks(tasksData);
-      setCategories(categoriesData);
+setCategories(categoriesData);
     } catch (err) {
       setError(err.message || 'Failed to load data');
-      toast.error('Failed to load tasks');
+      toast.error('Failed to load work items');
     } finally {
       setLoading(false);
     }
@@ -46,12 +46,12 @@ function TaskDashboard() {
 
   const handleCreateTask = async (taskData) => {
     try {
-      const newTask = await taskService.create(taskData);
+const newTask = await taskService.create(taskData);
       setTasks(prev => [newTask, ...prev]);
       setIsTaskModalOpen(false);
-      toast.success('Task created successfully');
+      toast.success('Work item created successfully');
     } catch (err) {
-      toast.error('Failed to create task');
+      toast.error('Failed to create work item');
     }
   };
 
@@ -60,12 +60,12 @@ function TaskDashboard() {
       const updatedTask = await taskService.update(taskId, taskData);
       setTasks(prev => prev.map(task =>
         task.id === taskId ? updatedTask : task
-      ));
+));
       setIsTaskModalOpen(false);
       setEditingTask(null);
-      toast.success('Task updated successfully');
+      toast.success('Work item updated successfully');
     } catch (err) {
-      toast.error('Failed to update task');
+      toast.error('Failed to update work item');
     }
   };
 
@@ -73,11 +73,11 @@ function TaskDashboard() {
     try {
       await taskService.delete(taskId);
       setTasks(prev => prev.filter(task => task.id !== taskId));
-      setIsTaskModalOpen(false);
+setIsTaskModalOpen(false);
       setEditingTask(null);
-      toast.success('Task deleted successfully');
+      toast.success('Work item deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete task');
+      toast.error('Failed to delete work item');
     }
   };
 
@@ -90,14 +90,13 @@ function TaskDashboard() {
       setTasks(prev => prev.map(t =>
         t.id === taskId ? updatedTask : t
       ));
-
-      if (completed) {
-        toast.success('Task completed! 🎉');
+if (completed) {
+        toast.success('Work item completed! 🎉');
       } else {
-        toast.info('Task marked as incomplete');
+        toast.info('Work item marked as incomplete');
       }
     } catch (err) {
-      toast.error('Failed to update task');
+      toast.error('Failed to update work item');
     }
   };
 
@@ -158,10 +157,10 @@ function TaskDashboard() {
   }
 
   return (
-    <div className="h-full flex flex-col max-w-full overflow-hidden">
+<div className="h-full flex flex-col max-w-full overflow-hidden">
       <PageHeader
-        title="Tasks"
-        subtitle={`${todayTasks.length} tasks due today • ${completedToday.length} completed`}
+        title="Work Items"
+        subtitle={`${todayTasks.length} work items due today • ${completedToday.length} completed`}
         searchQuery={searchQuery}
         onSearchChange={(e) => setSearchQuery(e.target.value)}
         onSearchKeyDown={handleQuickAdd}
@@ -173,19 +172,18 @@ function TaskDashboard() {
         showToggle={true}
         toggleLabel={showCompleted ? 'Hide Completed' : 'Show Completed'}
         onToggle={() => setShowCompleted(!showCompleted)}
-        toggleActive={showCompleted}
+toggleActive={showCompleted}
         onAddClick={() => setIsTaskModalOpen(true)}
-        addBtnText="Add Task"
+        addBtnText="Add Work Item"
       />
-
       <div className="flex-1 overflow-y-auto p-6">
         {filteredTasks.length === 0 ? (
-          <EmptyState
+<EmptyState
             iconName="CheckSquare"
-            title="No tasks found"
-            description={searchQuery ? 'Try adjusting your search or filters' : 'Create your first task to get started'}
+            title="No work items found"
+            description={searchQuery ? 'Try adjusting your search or filters' : 'Create your first work item to get started'}
             showButton={!searchQuery}
-            buttonText="Create Task"
+            buttonText="Create Work Item"
             onButtonClick={() => setIsTaskModalOpen(true)}
           />
         ) : (
