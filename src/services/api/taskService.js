@@ -17,9 +17,9 @@ const taskService = {
       throw new Error('Task not found');
     }
     return { ...task };
-  },
+},
 
-async create(taskData) {
+  async create(taskData) {
     await delay(400);
     
     // Handle recurring tasks
@@ -62,9 +62,9 @@ async create(taskData) {
     const index = tasks.findIndex(task => task.id === id);
     if (index === -1) {
       throw new Error('Task not found');
-    }
+}
     
-tasks.splice(index, 1);
+    tasks.splice(index, 1);
     return { success: true };
   }
 };
@@ -132,4 +132,4 @@ const generateRecurringTasks = (taskData) => {
   return generatedTasks;
 };
 
-export default taskService;
+export { taskService };
