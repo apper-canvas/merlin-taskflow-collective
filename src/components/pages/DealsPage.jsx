@@ -24,7 +24,7 @@ const DealsPage = () => {
   const [editingDeal, setEditingDeal] = useState(null);
   const [isAdmin, setIsAdmin] = useState(true); // In real app, this would come from auth
 
-  const categories = ['all', 'residential', 'commercial', 'renovation', 'landscaping'];
+const categories = ['all', 'ui-tools', 'prototyping', 'design-systems', 'collaboration', 'ui-libraries'];
   const discountRanges = [
     { value: 'all', label: 'All Discounts' },
     { value: '0-10', label: '0-10% Off' },
@@ -168,14 +168,14 @@ const DealsPage = () => {
     );
   }
 
-  return (
+return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageHeader
-        title="Current Deals"
-        subtitle="Discover amazing promotions on our featured projects"
+        title="Exclusive Deals for Design Agencies"
+        subtitle="Premium design tools and resources curated for web app and dashboard specialists"
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search deals..."
+        searchPlaceholder="Search design tools and resources..."
         sortBy={sortBy}
         onSortByChange={setSortBy}
         onAddClick={isAdmin ? handleAddDeal : undefined}
@@ -192,9 +192,12 @@ const DealsPage = () => {
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
-            {categories.map(category => (
+{categories.map(category => (
               <option key={category} value={category}>
                 {category === 'all' ? 'All Categories' : 
+                 category === 'ui-tools' ? 'UI Tools' :
+                 category === 'design-systems' ? 'Design Systems' :
+                 category === 'ui-libraries' ? 'UI Libraries' :
                  category.charAt(0).toUpperCase() + category.slice(1)}
               </option>
             ))}

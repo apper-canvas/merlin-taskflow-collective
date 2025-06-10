@@ -89,9 +89,12 @@ const DealCard = ({ deal, onEdit, onDelete, isAdmin }) => {
         {/* Deal Content */}
         <div className="p-6">
           {/* Category */}
-          <div className="flex items-center justify-between mb-3">
+<div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-              {deal.category.charAt(0).toUpperCase() + deal.category.slice(1)}
+              {deal.category === 'ui-tools' ? 'UI Tools' :
+               deal.category === 'design-systems' ? 'Design Systems' :
+               deal.category === 'ui-libraries' ? 'UI Libraries' :
+               deal.category.charAt(0).toUpperCase() + deal.category.slice(1)}
             </span>
             <span className="text-sm text-gray-500">
               Expires {formatDate(deal.expiryDate)}
