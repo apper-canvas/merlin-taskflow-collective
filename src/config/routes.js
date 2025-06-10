@@ -1,8 +1,8 @@
 import HomePage from '@/components/pages/HomePage';
 import ArchivePage from '@/components/pages/ArchivePage';
 import ProjectsPage from '@/components/pages/ProjectsPage';
+import DealsPage from '@/components/pages/DealsPage';
 import NotFoundPage from '@/components/pages/NotFoundPage';
-
 export const routes = {
   home: {
     id: 'home',
@@ -24,6 +24,13 @@ export const routes = {
     path: '/archive',
     icon: 'Archive',
     component: ArchivePage
+},
+  deals: {
+    id: 'deals',
+    label: 'Deals',
+    path: '/deals',
+    icon: 'Tag',
+    component: DealsPage
   },
   notFound: {
     id: 'notFound',

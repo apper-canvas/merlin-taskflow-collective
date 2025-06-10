@@ -73,7 +73,7 @@ const PageHeader = ({
           </Select>
         </div>
 
-        {onSortByChange && (
+{onSortByChange && (
           <div className="min-w-48">
             <Select
               value={sortBy}
@@ -82,6 +82,9 @@ const PageHeader = ({
               <option value="dueDate">Sort by Due Date</option>
               <option value="priority">Sort by Priority</option>
               <option value="created">Sort by Created</option>
+              <option value="discount">Sort by Discount</option>
+              <option value="expiry">Sort by Expiry Date</option>
+              <option value="category">Sort by Category</option>
             </Select>
           </div>
         )}
