@@ -234,30 +234,30 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-lg w-full max-h-[90vh] overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <ApperIcon name="RotateCcw" className="w-5 h-5 text-primary" />
+<Modal isOpen={isOpen} onClose={onClose} contentClassName="max-w-2xl w-full">
+      <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-large border border-slate-200/60">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl shadow-soft">
+                <ApperIcon name="RotateCcw" className="w-6 h-6 text-primary-600" />
               </div>
-              <h2 className="text-lg font-display font-semibold text-gray-900">
+              <h2 className="text-2xl font-display font-bold text-slate-800">
                 Configure Recurring Task
               </h2>
             </div>
             <Button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-slate-100 rounded-xl transition-all"
             >
-              <ApperIcon name="X" className="w-5 h-5" />
+              <ApperIcon name="X" className="w-5 h-5 text-slate-500" />
             </Button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Pattern Selector */}
             <FormField label="Recurrence Pattern">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-4">
                 {[
                   { value: 'daily', label: 'Daily', icon: 'Calendar' },
                   { value: 'weekly', label: 'Weekly', icon: 'CalendarDays' },
@@ -267,14 +267,14 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
                     key={pattern.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, pattern: pattern.value })}
-                    className={`p-4 rounded-lg border-2 transition-colors text-center ${
+                    className={`p-6 rounded-xl border-2 transition-all text-center hover:scale-105 ${
                       formData.pattern === pattern.value
-                        ? 'bg-primary text-white border-primary'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-primary/50'
+                        ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white border-primary-500 shadow-lg shadow-primary-500/25'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-primary-300 hover:shadow-soft'
                     }`}
                   >
-                    <ApperIcon name={pattern.icon} className="w-5 h-5 mx-auto mb-2" />
-                    <div className="text-sm font-medium">{pattern.label}</div>
+                    <ApperIcon name={pattern.icon} className="w-6 h-6 mx-auto mb-3" />
+                    <div className="text-sm font-semibold">{pattern.label}</div>
                   </button>
                 ))}
               </div>
@@ -284,8 +284,8 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
             {renderPatternControls()}
 
             {/* Date Range */}
-            <div className="grid grid-cols-2 gap-4">
-<FormField label="Start Date" error={errors.startDate}>
+            <div className="grid grid-cols-2 gap-6">
+              <FormField label="Start Date" error={errors.startDate}>
                 <div className="relative">
                   <Input
                     type="date"
@@ -293,7 +293,7 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                     error={errors.startDate}
                   />
-                  <ApperIcon name="Calendar" className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <ApperIcon name="Calendar" className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
               </FormField>
 
@@ -306,31 +306,31 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
                     error={errors.endDate}
                     disabled={formData.endType !== 'date'}
                   />
-                  <ApperIcon name="Calendar" className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <ApperIcon name="Calendar" className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
               </FormField>
             </div>
 
             {/* Schedule Preview */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-2 mb-3">
-                <ApperIcon name="Eye" className="w-4 h-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-900">Schedule Preview</h3>
+            <div className="p-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200">
+              <div className="flex items-center space-x-3 mb-4">
+                <ApperIcon name="Eye" className="w-5 h-5 text-slate-600" />
+                <h3 className="text-base font-semibold text-slate-800">Schedule Preview</h3>
               </div>
               {previewDates.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-600 mb-2">Next 3 occurrences:</p>
+                <div className="space-y-3">
+                  <p className="text-sm text-slate-600 font-medium mb-3">Next 3 occurrences:</p>
                   {previewDates.map((date, index) => (
-                    <div key={index} className="flex items-center space-x-2 text-sm">
-                      <ApperIcon name="Calendar" className="w-3 h-3 text-primary" />
-                      <span className="text-gray-700">
+                    <div key={index} className="flex items-center space-x-3 text-sm">
+                      <ApperIcon name="Calendar" className="w-4 h-4 text-primary-500" />
+                      <span className="text-slate-700 font-medium">
                         {format(date, 'EEEE, MMMM d, yyyy')}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 italic">
+                <p className="text-sm text-slate-500 italic">
                   No occurrences found with current settings
                 </p>
               )}
@@ -338,30 +338,30 @@ const RecurringTaskModal = ({ isOpen, onClose, onSave, initialData = null }) => 
 
             {/* Error Message */}
             {errors.submit && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <ApperIcon name="AlertCircle" className="w-4 h-4 text-red-600" />
-                  <p className="text-sm text-red-700">{errors.submit}</p>
+              <div className="p-4 bg-gradient-to-br from-error-50 to-error-100 border border-error-200 rounded-xl">
+                <div className="flex items-center space-x-3">
+                  <ApperIcon name="AlertCircle" className="w-5 h-5 text-error-600" />
+                  <p className="text-sm text-error-700 font-medium">{errors.submit}</p>
                 </div>
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
               <Button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                className="px-6 py-3 text-slate-700 hover:bg-slate-100 rounded-xl transition-all font-semibold border border-slate-200"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm flex items-center space-x-2"
+                className="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all font-semibold shadow-lg shadow-primary-500/25 flex items-center space-x-2"
               >
-                {isLoading && <Spinner className="w-4 h-4" />}
+                {isLoading && <Spinner size="sm" />}
                 <span>Save Recurrence</span>
               </Button>
             </div>
