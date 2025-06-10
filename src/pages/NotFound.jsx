@@ -41,7 +41,7 @@ function NotFound() {
 onClick={() => navigate('/')}
             className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
           >
-            Go to Work Items
+            Go to Tasks
           </motion.button>
           
           <motion.button
