@@ -10,8 +10,9 @@ import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
 import Spinner from '@/components/atoms/Spinner';
 import DeleteConfirmationModal from '@/components/organisms/DeleteConfirmationModal';
+import { categoryService } from '@/services';
 
-const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) => {
+const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories, onCategoriesUpdate }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -25,6 +26,10 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories }) 
 const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [categoryFormData, setCategoryFormData] = useState({ name: '', description: '' });
+  const [categoryErrors, setCategoryErrors] = useState({});
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false);
 useEffect(() => {
     if (task) {
       setFormData({
@@ -51,6 +56,55 @@ useEffect(() => {
     }
 setShowDeleteConfirm(false); // Reset confirmation state
   }, [task, isOpen]); // Also reset on modal open
+const validateCategoryForm = () => {
+    const newErrors = {};
+
+    if (!categoryFormData.name.trim()) {
+      newErrors.name = 'Category name is required';
+    } else if (categoryFormData.name.trim().length < 2) {
+      newErrors.name = 'Category name must be at least 2 characters';
+    } else if (categoryFormData.name.trim().length > 50) {
+      newErrors.name = 'Category name must be less than 50 characters';
+    } else if (categories?.some(cat => cat.name.toLowerCase() === categoryFormData.name.trim().toLowerCase())) {
+      newErrors.name = 'A category with this name already exists';
+    }
+
+    if (categoryFormData.description && categoryFormData.description.length > 200) {
+      newErrors.description = 'Description must be less than 200 characters';
+    }
+
+    setCategoryErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleCreateCategory = async () => {
+    if (!validateCategoryForm()) return;
+
+    setIsCategoryLoading(true);
+    try {
+      const newCategory = await categoryService.create({
+        name: categoryFormData.name.trim(),
+        description: categoryFormData.description.trim() || ''
+      });
+      
+      // Update the form data to select the new category
+      setFormData({ ...formData, category: newCategory.id });
+      
+      // Reset category form
+      setCategoryFormData({ name: '', description: '' });
+      setCategoryErrors({});
+      setShowCategoryForm(false);
+      
+      // Notify parent to refresh categories
+      if (onCategoriesUpdate) {
+        onCategoriesUpdate();
+      }
+    } catch (error) {
+      setCategoryErrors({ submit: 'Failed to create category. Please try again.' });
+    } finally {
+      setIsCategoryLoading(false);
+    }
+  };
 
 const validateForm = () => {
     const newErrors = {};
@@ -216,18 +270,120 @@ return (
             </FormField>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Category">
-                <Select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  disabled={isLoading}
-                >
-                  {categories?.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </Select>
+<FormField label="Category">
+                <div className="space-y-3">
+                  <Select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    disabled={isLoading || isCategoryLoading}
+                    error={errors.category}
+                  >
+                    {categories?.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </Select>
+                  
+                  {!showCategoryForm && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setShowCategoryForm(true)}
+                      disabled={isLoading || isCategoryLoading}
+                      className="text-sm"
+                    >
+                      <ApperIcon name="Plus" size={16} className="mr-1" />
+                      Create New Category
+                    </Button>
+                  )}
+                  
+                  {showCategoryForm && (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-gray-900">Create New Category</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setShowCategoryForm(false);
+                            setCategoryFormData({ name: '', description: '' });
+                            setCategoryErrors({});
+                          }}
+                          disabled={isCategoryLoading}
+                        >
+                          <ApperIcon name="X" size={16} />
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <FormField label="Category Name" required error={categoryErrors.name}>
+                          <Input
+                            value={categoryFormData.name}
+                            onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                            placeholder="Enter category name"
+                            disabled={isCategoryLoading}
+                            error={categoryErrors.name}
+                          />
+                        </FormField>
+                        
+                        <FormField label="Description (Optional)" error={categoryErrors.description}>
+                          <Textarea
+                            value={categoryFormData.description}
+                            onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
+                            placeholder="Enter category description"
+                            disabled={isCategoryLoading}
+                            rows={2}
+                            error={categoryErrors.description}
+                          />
+                        </FormField>
+                        
+                        {categoryErrors.submit && (
+                          <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                            {categoryErrors.submit}
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={handleCreateCategory}
+                            disabled={isCategoryLoading || !categoryFormData.name.trim()}
+                          >
+                            {isCategoryLoading ? (
+                              <>
+                                <Spinner size="sm" className="mr-2" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <ApperIcon name="Plus" size={16} className="mr-1" />
+                                Create Category
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setShowCategoryForm(false);
+                              setCategoryFormData({ name: '', description: '' });
+                              setCategoryErrors({});
+                            }}
+                            disabled={isCategoryLoading}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </FormField>
 
               <FormField label="Priority">
