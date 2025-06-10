@@ -34,11 +34,11 @@ function TaskDashboard() {
         taskService.getAll(),
         categoryService.getAll()
       ]);
-setTasks(tasksData);
+      setTasks(tasksData);
       setCategories(categoriesData);
     } catch (err) {
       setError(err.message || 'Failed to load data');
-      toast.error('Failed to load work items');
+      toast.error('Failed to load tasks');
     } finally {
       setLoading(false);
     }
@@ -49,9 +49,9 @@ setTasks(tasksData);
       const newTask = await taskService.create(taskData);
       setTasks(prev => [newTask, ...prev]);
       setIsTaskModalOpen(false);
-      toast.success('Work item created successfully');
+      toast.success('Task created successfully');
     } catch (err) {
-      toast.error('Failed to create work item');
+      toast.error('Failed to create task');
     }
   };
 
@@ -59,13 +59,13 @@ setTasks(tasksData);
     try {
       const updatedTask = await taskService.update(taskId, taskData);
       setTasks(prev => prev.map(task =>
-task.id === taskId ? updatedTask : task
+        task.id === taskId ? updatedTask : task
       ));
       setIsTaskModalOpen(false);
       setEditingTask(null);
-      toast.success('Work item updated successfully');
+      toast.success('Task updated successfully');
     } catch (err) {
-      toast.error('Failed to update work item');
+      toast.error('Failed to update task');
     }
   };
 
@@ -75,9 +75,9 @@ task.id === taskId ? updatedTask : task
       setTasks(prev => prev.filter(task => task.id !== taskId));
       setIsTaskModalOpen(false);
       setEditingTask(null);
-      toast.success('Work item deleted successfully');
+      toast.success('Task deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete work item');
+      toast.error('Failed to delete task');
     }
   };
 
@@ -88,15 +88,16 @@ task.id === taskId ? updatedTask : task
         completedAt: completed ? new Date().toISOString() : null
       });
       setTasks(prev => prev.map(t =>
-t.id === taskId ? updatedTask : t
+        t.id === taskId ? updatedTask : t
       ));
+
       if (completed) {
-        toast.success('Work item completed! 🎉');
+        toast.success('Task completed! 🎉');
       } else {
-        toast.info('Work item marked as incomplete');
+        toast.info('Task marked as incomplete');
       }
     } catch (err) {
-      toast.error('Failed to update work item');
+      toast.error('Failed to update task');
     }
   };
 
@@ -132,7 +133,7 @@ t.id === taskId ? updatedTask : t
       if (sortBy === 'priority') {
         return b.priority - a.priority;
       }
-return new Date(b.createdAt) - new Date(a.createdAt);
+      return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
   const todayTasks = tasks.filter(task =>
@@ -142,6 +143,7 @@ return new Date(b.createdAt) - new Date(a.createdAt);
   const completedToday = tasks.filter(task =>
     task.completed && task.completedAt && isToday(new Date(task.completedAt))
   );
+
   const getCategoryInfo = (categoryId) => {
     return categories.find(cat => cat.id === categoryId) ||
            { name: categoryId, color: '#6B7280', icon: 'Tag' };
@@ -154,11 +156,12 @@ return new Date(b.createdAt) - new Date(a.createdAt);
   if (error) {
     return <ErrorState message={error} onRetry={loadData} />;
   }
-return (
+
+  return (
     <div className="h-full flex flex-col max-w-full overflow-hidden">
       <PageHeader
-        title="Work Items"
-        subtitle={`${todayTasks.length} work items due today • ${completedToday.length} completed`}
+        title="Tasks"
+        subtitle={`${todayTasks.length} tasks due today • ${completedToday.length} completed`}
         searchQuery={searchQuery}
         onSearchChange={(e) => setSearchQuery(e.target.value)}
         onSearchKeyDown={handleQuickAdd}
@@ -172,16 +175,17 @@ return (
         onToggle={() => setShowCompleted(!showCompleted)}
         toggleActive={showCompleted}
         onAddClick={() => setIsTaskModalOpen(true)}
-        addBtnText="New Work Item"
+        addBtnText="Add Task"
       />
+
       <div className="flex-1 overflow-y-auto p-6">
         {filteredTasks.length === 0 ? (
           <EmptyState
             iconName="CheckSquare"
-            title="No work items found"
-            description={searchQuery ? 'Try adjusting your search or filters' : 'Create your first work item to get started'}
+            title="No tasks found"
+            description={searchQuery ? 'Try adjusting your search or filters' : 'Create your first task to get started'}
             showButton={!searchQuery}
-            buttonText="Create Work Item"
+            buttonText="Create Task"
             onButtonClick={() => setIsTaskModalOpen(true)}
           />
         ) : (

@@ -3,7 +3,7 @@ import ArchivePage from '@/components/pages/ArchivePage';
 import NotFoundPage from '@/components/pages/NotFoundPage';
 
 export const routes = {
-home: {
+  home: {
     id: 'home',
     label: 'Tasks',
     path: '/',
