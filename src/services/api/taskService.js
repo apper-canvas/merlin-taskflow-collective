@@ -132,4 +132,4 @@ const generateRecurringTasks = (taskData) => {
   return generatedTasks;
 };
 
-export { taskService };
+export default taskService;

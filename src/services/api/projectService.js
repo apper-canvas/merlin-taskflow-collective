@@ -51,7 +51,7 @@ let projects = [...mockProjects];
 // Simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const projectService = {
+const projectService = {
   async getAll() {
     await delay(200);
     return [...projects];
@@ -109,3 +109,4 @@ export const projectService = {
     return true;
   }
 };
+export default projectService;
