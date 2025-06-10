@@ -5,7 +5,7 @@ import NotFoundPage from '@/components/pages/NotFoundPage';
 export const routes = {
 home: {
     id: 'home',
-    label: 'Tasks',
+    label: 'Work Items',
     path: '/',
     icon: 'CheckSquare',
 component: HomePage
