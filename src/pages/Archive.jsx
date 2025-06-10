@@ -3,30 +3,31 @@ import { motion } from 'framer-motion';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'react-toastify';
 import ApperIcon from '../components/ApperIcon';
-import { taskService, categoryService } from '../services';
-
+import { taskService, categoryService, projectService } from '../services';
 function Archive() {
-  const [tasks, setTasks] = useState([]);
+const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [tasksData, categoriesData] = await Promise.all([
+      const [tasksData, categoriesData, projectsData] = await Promise.all([
         taskService.getAll(),
-        categoryService.getAll()
+        categoryService.getAll(),
+        projectService.getAll()
       ]);
       setTasks(tasksData);
       setCategories(categoriesData);
+      setProjects(projectsData);
     } catch (err) {
       setError(err.message || 'Failed to load data');
       toast.error('Failed to load archived tasks');
@@ -69,11 +70,14 @@ function Archive() {
     })
     .sort((a, b) => new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt));
 
-  const getCategoryInfo = (categoryId) => {
+const getCategoryInfo = (categoryId) => {
     return categories.find(cat => cat.id === categoryId) || 
            { name: categoryId, color: '#6B7280', icon: 'Tag' };
   };
 
+  const getProjectInfo = (projectId) => {
+    return projects.find(proj => proj.id === projectId);
+  };
   const getCompletionTimeAgo = (completedAt) => {
     if (!completedAt) return 'Unknown';
     const days = differenceInDays(new Date(), new Date(completedAt));
@@ -188,8 +192,9 @@ function Archive() {
           </motion.div>
         ) : (
           <div className="space-y-3">
-            {completedTasks.map((task, index) => {
+{completedTasks.map((task, index) => {
               const category = getCategoryInfo(task.category);
+              const project = getProjectInfo(task.projectId);
               
               return (
                 <motion.div
@@ -216,6 +221,14 @@ function Archive() {
                             <p className="text-sm text-gray-500 mt-1 break-words">
                               {task.description}
                             </p>
+                          )}
+                          {project && (
+                            <div className="flex items-center space-x-1 mt-2">
+                              <ApperIcon name="FolderOpen" className="w-3 h-3 text-gray-400" />
+                              <span className="text-xs text-gray-500">
+                                {project.name}
+                              </span>
+                            </div>
                           )}
                         </div>
                         

@@ -1,7 +1,3 @@
-import taskService from './api/taskService';
-import categoryService from './api/categoryService';
-
-export {
-  taskService,
-  categoryService
-};
+export { taskService } from './api/taskService';
+export { categoryService } from './api/categoryService';
+export { projectService } from './api/projectService';

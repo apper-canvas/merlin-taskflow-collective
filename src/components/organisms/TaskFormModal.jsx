@@ -10,8 +10,7 @@ import Checkbox from '@/components/atoms/Checkbox';
 import Button from '@/components/atoms/Button';
 import Spinner from '@/components/atoms/Spinner';
 import DeleteConfirmationModal from '@/components/organisms/DeleteConfirmationModal';
-import { categoryService } from '@/services';
-
+import { categoryService, projectService } from '@/services';
 const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories, onCategoriesUpdate }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -21,8 +20,11 @@ const TaskFormModal = ({ isOpen, onClose, onSave, onDelete, task, categories, on
     dueDate: format(new Date(), 'yyyy-MM-dd'),
     completed: false,
     isRecurring: false,
-    recurringConfig: null
+    recurringConfig: null,
+    projectId: ''
   });
+  const [projects, setProjects] = useState([]);
+  const [isProjectLoading, setIsProjectLoading] = useState(false);
 const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +42,8 @@ useEffect(() => {
         dueDate: format(new Date(task.dueDate), 'yyyy-MM-dd'),
         completed: task.completed,
         isRecurring: task.isRecurring || false,
-        recurringConfig: task.recurringConfig || null
+        recurringConfig: task.recurringConfig || null,
+        projectId: task.projectId || ''
       });
     } else {
       setFormData({
@@ -51,11 +54,30 @@ useEffect(() => {
         dueDate: format(new Date(), 'yyyy-MM-dd'),
         completed: false,
         isRecurring: false,
-        recurringConfig: null
+        recurringConfig: null,
+        projectId: ''
       });
     }
-setShowDeleteConfirm(false); // Reset confirmation state
+    setShowDeleteConfirm(false); // Reset confirmation state
   }, [task, isOpen]); // Also reset on modal open
+
+  useEffect(() => {
+    if (isOpen) {
+      loadProjects();
+    }
+  }, [isOpen]);
+
+  const loadProjects = async () => {
+    setIsProjectLoading(true);
+    try {
+      const projectsData = await projectService.getAll();
+      setProjects(projectsData.filter(p => p.status === 'active'));
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    } finally {
+      setIsProjectLoading(false);
+    }
+  };
 const validateCategoryForm = () => {
     const newErrors = {};
 
@@ -138,7 +160,8 @@ const validateForm = () => {
     try {
       const taskData = {
         ...formData,
-        dueDate: new Date(formData.dueDate).toISOString()
+        dueDate: new Date(formData.dueDate).toISOString(),
+        projectId: formData.projectId || null
       };
 
       if (task) {
@@ -267,7 +290,7 @@ return (
               />
             </FormField>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label="Category">
                 <div className="space-y-4">
                   <Select
@@ -379,6 +402,29 @@ return (
                 </div>
               </FormField>
 
+              <FormField label="Project (Optional)">
+                <Select
+                  value={formData.projectId}
+                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                  disabled={isLoading || isProjectLoading}
+                >
+                  <option value="">No Project</option>
+                  {projects?.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </Select>
+                {isProjectLoading && (
+                  <div className="flex items-center space-x-2 mt-2 text-sm text-gray-500">
+                    <Spinner size="sm" />
+                    <span>Loading projects...</span>
+                  </div>
+                )}
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label="Priority">
                 <Select
                   value={formData.priority}
