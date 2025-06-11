@@ -1,159 +1,274 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import ApperIcon from '@/components/ApperIcon';
-import Button from '@/components/atoms/Button';
-import SocialShareModal from '@/components/organisms/SocialShareModal';
+import React, { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
+import PropTypes from 'prop-types'
+import ApperIcon from '@/components/ApperIcon'
+import Button from '@/components/atoms/Button'
+import SocialShareModal from '@/components/organisms/SocialShareModal'
 
-const DealCard = ({ deal, onEdit, onDelete, isAdmin }) => {
-  const [showShareModal, setShowShareModal] = useState(false);
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+function formatDate(dateString) {
+  try {
+    if (!dateString) return 'No date specified'
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'Invalid date'
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
+      day: 'numeric'
+    })
+  } catch (error) {
+    console.error('Date formatting error:', error)
+    return 'Invalid date'
+  }
+}
 
-  const getDaysRemaining = (expiryDate) => {
-    const today = new Date();
-    const expiry = new Date(expiryDate);
-    const diffTime = expiry - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
+function getDaysRemaining(expiryDate) {
+  try {
+    if (!expiryDate) return 0
+    
+    const today = new Date()
+    const expiry = new Date(expiryDate)
+    
+    if (isNaN(expiry.getTime())) return 0
+    
+    const diffTime = expiry - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  } catch (error) {
+    console.error('Days remaining calculation error:', error)
+    return 0
+  }
+}
 
-  const daysRemaining = getDaysRemaining(deal.expiryDate);
-  const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0;
-  const isExpired = daysRemaining <= 0;
+function DealCard({ deal, onEdit, onDelete, onToggleFavorite, className = '', showActions = true }) {
+  // Early return if deal is not provided
+  if (!deal) {
+    return (
+      <div className="bg-gray-100 rounded-xl border border-gray-200 p-6 text-center">
+        <p className="text-gray-500">Deal information not available</p>
+      </div>
+    )
+  }
+
+  const [showShareModal, setShowShareModal] = useState(false)
+
+  const daysRemaining = getDaysRemaining(deal.expiryDate)
+  const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0
+  const isExpired = daysRemaining <= 0
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.3, ease: "easeOut" }
+    },
+    hover: { 
+      y: -4,
+      transition: { duration: 0.2, ease: "easeOut" }
+    }
+  }
+
+  // Safe price calculations
+  const dealPrice = Number(deal.price) || 0
+  const originalPrice = Number(deal.originalPrice) || 0
+  const hasDiscount = originalPrice > dealPrice && originalPrice > 0
+  const savings = hasDiscount ? (originalPrice - dealPrice).toFixed(2) : 0
 
   return (
-    <>
-      <motion.div
-        className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100"
-        whileHover={{ y: -2 }}
-      >
-        {/* Deal Image */}
-        <div className="relative h-48 bg-gradient-to-br from-blue-50 to-indigo-100">
-          {deal.image ? (
-            <img
-              src={deal.image}
-              alt={deal.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ApperIcon 
-                name="Image" 
-                className="h-16 w-16 text-gray-400"
-              />
-            </div>
-          )}
-          
-          {/* Discount Badge */}
-          <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">
-            {deal.discountPercentage}% OFF
+    <motion.div
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      className={`bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 ${className}`}
+    >
+      {/* Deal Image */}
+      <div className="relative h-48 bg-gradient-to-br from-blue-50 to-indigo-100">
+        {deal.imageUrl ? (
+          <img 
+            src={deal.imageUrl} 
+            alt={deal.title || 'Deal image'}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none'
+              e.target.nextElementSibling.style.display = 'flex'
+            }}
+          />
+        ) : null}
+        
+        {/* Fallback image placeholder */}
+        <div className="w-full h-full flex items-center justify-center" style={{ display: deal.imageUrl ? 'none' : 'flex' }}>
+          <ApperIcon icon="image" className="w-12 h-12 text-gray-400" />
+        </div>
+        
+        {/* Status Badge */}
+        {isExpired ? (
+          <div className="absolute top-3 right-3 bg-red-500/90 text-white px-2 py-1 rounded-full text-xs font-medium">
+            Expired
           </div>
+        ) : isExpiringSoon ? (
+          <div className="absolute top-3 right-3 bg-orange-500/90 text-white px-2 py-1 rounded-full text-xs font-medium">
+            Expires Soon
+          </div>
+        ) : (
+          <div className="absolute top-3 right-3 bg-green-500/90 text-white px-2 py-1 rounded-full text-xs font-medium">
+            Active
+          </div>
+        )}
+        
+        {/* Favorite Button */}
+        <button 
+          onClick={() => onToggleFavorite?.(deal.id)}
+          className="absolute top-3 left-3 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+          aria-label={deal.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <ApperIcon 
+            icon={deal.isFavorite ? "heart-filled" : "heart"} 
+            className={`w-4 h-4 ${deal.isFavorite ? 'text-red-500' : 'text-gray-600'}`}
+          />
+        </button>
+      </div>
 
-          {/* Expiry Badge */}
-          {(isExpiringSoon || isExpired) && (
-            <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium ${
-              isExpired 
-                ? 'bg-gray-500 text-white' 
-                : 'bg-yellow-500 text-white'
-            }`}>
-              {isExpired ? 'Expired' : `${daysRemaining} days left`}
-            </div>
-          )}
-
-          {/* Admin Actions */}
-          {isAdmin && (
-            <div className="absolute bottom-4 right-4 flex space-x-2">
-              <Button
-                onClick={onEdit}
-                className="p-2 bg-white/90 text-gray-700 hover:bg-white rounded-lg"
-              >
-                <ApperIcon name="Edit2" className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={onDelete}
-                className="p-2 bg-white/90 text-red-600 hover:bg-white rounded-lg"
-              >
-                <ApperIcon name="Trash2" className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+      {/* Deal Content */}
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+              {deal.title || 'Untitled Deal'}
+            </h3>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {deal.description || 'No description available'}
+            </p>
+          </div>
         </div>
 
-        {/* Deal Content */}
-        <div className="p-6">
-          {/* Category */}
-<div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-              {deal.category === 'ui-tools' ? 'UI Tools' :
-               deal.category === 'design-systems' ? 'Design Systems' :
-               deal.category === 'ui-libraries' ? 'UI Libraries' :
-               deal.category.charAt(0).toUpperCase() + deal.category.slice(1)}
-            </span>
-            <span className="text-sm text-gray-500">
-              Expires {formatDate(deal.expiryDate)}
-            </span>
-          </div>
+        {/* Category & Expiry */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            {deal.category === 'ui-tools' ? 'UI Tools' :
+             deal.category === 'design-systems' ? 'Design Systems' :
+             deal.category === 'ui-libraries' ? 'UI Libraries' :
+             deal.category?.charAt(0)?.toUpperCase() + deal.category?.slice(1) || 'Category'}
+          </span>
+          <span className="text-sm text-gray-500">
+            Expires {formatDate(deal.expiryDate)}
+          </span>
+        </div>
 
-          {/* Title */}
-          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-            {deal.title}
-          </h3>
-
-          {/* Description */}
-          <p className="text-gray-600 mb-4 line-clamp-3">
-            {deal.description}
-          </p>
-
-          {/* Original and Sale Price */}
-          <div className="flex items-center space-x-3 mb-4">
-            <span className="text-2xl font-bold text-green-600">
-              ${deal.salePrice?.toLocaleString()}
+        {/* Pricing */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-2xl font-bold text-gray-900">
+              ${dealPrice.toFixed(2)}
             </span>
-            {deal.originalPrice && (
+            {hasDiscount && (
               <span className="text-lg text-gray-500 line-through">
-                ${deal.originalPrice.toLocaleString()}
+                ${originalPrice.toFixed(2)}
+              </span>
+            )}
+            {hasDiscount && (
+              <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded">
+                Save ${savings}
               </span>
             )}
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex space-x-3">
-            <Link
-              to={deal.projectLink}
-              className="flex-1"
-            >
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                View Project
-              </Button>
-            </Link>
-            
-            <Button
-              onClick={() => setShowShareModal(true)}
-              variant="outline"
-              className="px-4 border-gray-300 text-gray-700 hover:border-gray-400"
-            >
-              <ApperIcon name="Share2" className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
-      </motion.div>
 
-      {/* Social Share Modal */}
+        {/* Actions */}
+        {showActions && (
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div className="flex items-center space-x-2">
+              <Button
+                as={Link}
+                to={`/deals/${deal.id || ''}`}
+                variant="primary"
+                size="sm"
+                className="flex-1"
+                disabled={isExpired}
+              >
+                {isExpired ? 'Expired' : 'View Deal'}
+              </Button>
+              
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Share deal"
+                aria-label="Share deal"
+              >
+                <ApperIcon icon="share" className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {(onEdit || onDelete) && (
+              <div className="flex items-center space-x-1 ml-3">
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(deal)}
+                    className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Edit deal"
+                    aria-label="Edit deal"
+                  >
+                    <ApperIcon icon="edit" className="w-4 h-4" />
+                  </button>
+                )}
+                
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(deal.id)}
+                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete deal"
+                    aria-label="Delete deal"
+                  >
+                    <ApperIcon icon="trash" className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Share Modal */}
       {showShareModal && (
         <SocialShareModal
-          deal={deal}
+          isOpen={showShareModal}
           onClose={() => setShowShareModal(false)}
+          deal={deal}
         />
       )}
-    </>
-  );
-};
+    </motion.div>
+  )
+}
 
-export default DealCard;
+DealCard.propTypes = {
+  deal: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    title: PropTypes.string,
+    description: PropTypes.string,
+    price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    originalPrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    category: PropTypes.string,
+    imageUrl: PropTypes.string,
+    expiryDate: PropTypes.string,
+    isFavorite: PropTypes.bool
+  }),
+  onEdit: PropTypes.func,
+  onDelete: PropTypes.func,
+  onToggleFavorite: PropTypes.func,
+  className: PropTypes.string,
+  showActions: PropTypes.bool
+}
+
+DealCard.defaultProps = {
+  deal: null,
+  onEdit: null,
+  onDelete: null,
+  onToggleFavorite: null,
+  className: '',
+  showActions: true
+}
+
+export default DealCard
