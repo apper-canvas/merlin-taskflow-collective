@@ -6,6 +6,7 @@ import ApperIcon from '@/components/ApperIcon'
 import Button from '@/components/atoms/Button'
 import SocialShareModal from '@/components/organisms/SocialShareModal'
 
+// Helper function to format date
 function formatDate(dateString) {
   try {
     if (!dateString) return 'No date specified'
@@ -27,16 +28,17 @@ function getDaysRemaining(expiryDate) {
   try {
     if (!expiryDate) return 0
     
-    const today = new Date()
     const expiry = new Date(expiryDate)
+    const now = new Date()
     
     if (isNaN(expiry.getTime())) return 0
     
-    const diffTime = expiry - today
+    const diffTime = expiry.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    
+    return Math.max(0, diffDays)
   } catch (error) {
-    console.error('Days remaining calculation error:', error)
+    console.error('Error calculating days remaining:', error)
     return 0
   }
 }
@@ -262,13 +264,5 @@ DealCard.propTypes = {
   showActions: PropTypes.bool
 }
 
-DealCard.defaultProps = {
-  deal: null,
-  onEdit: null,
-  onDelete: null,
-  onToggleFavorite: null,
-  className: '',
-  showActions: true
-}
 
 export default DealCard
