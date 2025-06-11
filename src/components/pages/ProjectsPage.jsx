@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { format, parseISO } from 'date-fns';
 import ApperIcon from '@/components/ApperIcon';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
@@ -24,14 +25,28 @@ const ProjectsPage = () => {
   const [editingProject, setEditingProject] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmProject, setDeleteConfirmProject] = useState(null);
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     name: '',
     description: '',
     status: 'active',
+    startDate: '',
+    endDate: '',
+    budget: '',
+    actualSpend: '',
     teamMembers: ''
   });
   const [formErrors, setFormErrors] = useState({});
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
 
+  // Real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadProjects();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => {
     loadProjects();
   }, []);
@@ -50,6 +65,30 @@ const ProjectsPage = () => {
     }
   };
 
+// Metrics calculations
+  const getProjectMetrics = () => {
+    const totalProjects = projects.length;
+    const activeProjects = projects.filter(p => p.status === 'active').length;
+    const completedProjects = projects.filter(p => p.status === 'completed').length;
+    const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
+    const completionRate = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
+    
+    const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+    const totalSpend = projects.reduce((sum, p) => sum + (p.actualSpend || 0), 0);
+    const budgetVariance = totalBudget - totalSpend;
+    
+    return {
+      totalProjects,
+      activeProjects,
+      completedProjects,
+      onHoldProjects,
+      completionRate,
+      totalBudget,
+      totalSpend,
+      budgetVariance
+    };
+  };
+
   const validateForm = () => {
     const newErrors = {};
     
@@ -63,6 +102,18 @@ const ProjectsPage = () => {
     
     if (formData.description.length > 500) {
       newErrors.description = 'Description must be 500 characters or less';
+    }
+
+    if (formData.startDate && formData.endDate && new Date(formData.startDate) > new Date(formData.endDate)) {
+      newErrors.endDate = 'End date must be after start date';
+    }
+
+    if (formData.budget && (isNaN(formData.budget) || Number(formData.budget) < 0)) {
+      newErrors.budget = 'Budget must be a valid positive number';
+    }
+
+    if (formData.actualSpend && (isNaN(formData.actualSpend) || Number(formData.actualSpend) < 0)) {
+      newErrors.actualSpend = 'Actual spend must be a valid positive number';
     }
     
     setFormErrors(newErrors);
@@ -80,8 +131,10 @@ const ProjectsPage = () => {
     setFormErrors({});
 
     try {
-      const projectData = {
+const projectData = {
         ...formData,
+        budget: formData.budget ? Number(formData.budget) : 0,
+        actualSpend: formData.actualSpend ? Number(formData.actualSpend) : 0,
         teamMembers: formData.teamMembers ? formData.teamMembers.split(',').map(m => m.trim()).filter(m => m) : []
       };
 
@@ -104,13 +157,17 @@ const ProjectsPage = () => {
   };
 
   const handleEdit = (project) => {
-    setEditingProject(project);
-    setFormData({
+setFormData({
       name: project.name,
       description: project.description || '',
       status: project.status,
+      startDate: project.startDate || '',
+      endDate: project.endDate || '',
+      budget: project.budget ? project.budget.toString() : '',
+      actualSpend: project.actualSpend ? project.actualSpend.toString() : '',
       teamMembers: project.teamMembers ? project.teamMembers.join(', ') : ''
     });
+    setFormErrors({});
     setFormErrors({});
     setIsModalOpen(true);
   };
@@ -129,22 +186,73 @@ const ProjectsPage = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingProject(null);
-    setFormData({
+setFormData({
       name: '',
       description: '',
       status: 'active',
+      startDate: '',
+      endDate: '',
+      budget: '',
+      actualSpend: '',
       teamMembers: ''
     });
     setFormErrors({});
   };
 
-  const filteredProjects = projects.filter(project => {
+const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          project.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  const sortedProjects = [...filteredProjects].sort((a, b) => {
+    let aValue = a[sortField];
+    let bValue = b[sortField];
+    
+    if (sortField === 'startDate' || sortField === 'endDate') {
+      aValue = aValue ? new Date(aValue) : new Date(0);
+      bValue = bValue ? new Date(bValue) : new Date(0);
+    } else if (typeof aValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue?.toLowerCase() || '';
+    }
+    
+    if (sortDirection === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      return format(parseISO(dateString), 'MMM dd, yyyy');
+    } catch {
+      return '-';
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount || 0);
+  };
+
+  const metrics = getProjectMetrics();
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'text-success bg-success/10';
@@ -188,15 +296,15 @@ const ProjectsPage = () => {
     );
   }
 
-  return (
+return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
-              <p className="text-gray-600 mt-2">Manage your projects and track progress</p>
+              <h1 className="text-3xl font-bold text-gray-900">Projects Dashboard</h1>
+              <p className="text-gray-600 mt-2">Monitor project progress and manage your portfolio</p>
             </div>
             <Button
               onClick={() => setIsModalOpen(true)}
@@ -206,6 +314,85 @@ const ProjectsPage = () => {
               <span>New Project</span>
             </Button>
           </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Projects</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{metrics.totalProjects}</p>
+              </div>
+              <div className="p-3 bg-primary-50 rounded-lg">
+                <ApperIcon name="FolderOpen" className="w-6 h-6 text-primary-600" />
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Projects</p>
+                <p className="text-2xl font-bold text-success mt-1">{metrics.activeProjects}</p>
+              </div>
+              <div className="p-3 bg-success-50 rounded-lg">
+                <ApperIcon name="Play" className="w-6 h-6 text-success" />
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Budget vs Spend</p>
+                <p className={`text-2xl font-bold mt-1 ${metrics.budgetVariance >= 0 ? 'text-success' : 'text-error'}`}>
+                  {formatCurrency(metrics.budgetVariance)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formatCurrency(metrics.totalSpend)} of {formatCurrency(metrics.totalBudget)}
+                </p>
+              </div>
+              <div className={`p-3 rounded-lg ${metrics.budgetVariance >= 0 ? 'bg-success-50' : 'bg-error-50'}`}>
+                <ApperIcon name="DollarSign" className={`w-6 h-6 ${metrics.budgetVariance >= 0 ? 'text-success' : 'text-error'}`} />
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Completion Rate</p>
+                <p className="text-2xl font-bold text-primary-600 mt-1">{metrics.completionRate}%</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {metrics.completedProjects} of {metrics.totalProjects} completed
+                </p>
+              </div>
+              <div className="p-3 bg-primary-50 rounded-lg">
+                <ApperIcon name="TrendingUp" className="w-6 h-6 text-primary-600" />
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Filters */}
@@ -238,9 +425,8 @@ const ProjectsPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Projects Grid */}
-        {filteredProjects.length === 0 ? (
+{/* Projects Table */}
+        {sortedProjects.length === 0 ? (
           <EmptyState
             icon="FolderOpen"
             title={searchQuery || statusFilter !== 'all' ? "No projects found" : "No projects yet"}
@@ -251,79 +437,130 @@ const ProjectsPage = () => {
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project, index) => (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all group"
-              >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-lg mb-2 break-words">
-                        {project.name}
-                      </h3>
-                      {project.description && (
-                        <p className="text-gray-600 text-sm break-words line-clamp-3">
-                          {project.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                        <ApperIcon name={getStatusIcon(project.status)} className="w-3 h-3 mr-1" />
-                        {project.status.charAt(0).toUpperCase() + project.status.slice(1).replace('-', ' ')}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        onClick={() => handleEdit(project)}
-                        className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
-                      >
-                        <ApperIcon name="Edit" className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        onClick={() => setDeleteConfirmProject(project)}
-                        className="p-2 text-gray-600 hover:text-error hover:bg-error/10 rounded-lg transition-all"
-                      >
-                        <ApperIcon name="Trash2" className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {project.teamMembers && project.teamMembers.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center space-x-2">
-                        <ApperIcon name="Users" className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          {project.teamMembers.length} team member{project.teamMembers.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {project.teamMembers.slice(0, 3).map((member, i) => (
-                          <span key={i} className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
-                            {member}
-                          </span>
-                        ))}
-                        {project.teamMembers.length > 3 && (
-                          <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
-                            +{project.teamMembers.length - 3} more
-                          </span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+          >
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Project Name</span>
+                        {sortField === 'name' && (
+                          <ApperIcon
+                            name={sortDirection === 'asc' ? 'ChevronUp' : 'ChevronDown'}
+                            className="w-4 h-4"
+                          />
                         )}
                       </div>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                    </th>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('startDate')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Start Date</span>
+                        {sortField === 'startDate' && (
+                          <ApperIcon
+                            name={sortDirection === 'asc' ? 'ChevronUp' : 'ChevronDown'}
+                            className="w-4 h-4"
+                          />
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('endDate')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>End Date</span>
+                        {sortField === 'endDate' && (
+                          <ApperIcon
+                            name={sortDirection === 'asc' ? 'ChevronUp' : 'ChevronDown'}
+                            className="w-4 h-4"
+                          />
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Status</span>
+                        {sortField === 'status' && (
+                          <ApperIcon
+                            name={sortDirection === 'asc' ? 'ChevronUp' : 'ChevronDown'}
+                            className="w-4 h-4"
+                          />
+                        )}
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedProjects.map((project, index) => (
+                    <motion.tr
+                      key={project.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.02 }}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                          {project.description && (
+                            <div className="text-sm text-gray-500 truncate max-w-xs">
+                              {project.description}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatDate(project.startDate)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatDate(project.endDate)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                          <ApperIcon name={getStatusIcon(project.status)} className="w-3 h-3 mr-1" />
+                          {project.status.charAt(0).toUpperCase() + project.status.slice(1).replace('-', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            onClick={() => handleEdit(project)}
+                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                          >
+                            <ApperIcon name="Edit" className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => setDeleteConfirmProject(project)}
+                            className="p-2 text-gray-600 hover:text-error hover:bg-error/10 rounded-lg transition-all"
+                          >
+                            <ApperIcon name="Trash2" className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
         )}
       </div>
 
@@ -368,6 +605,52 @@ const ProjectsPage = () => {
               <option value="cancelled">Cancelled</option>
             </Select>
           </FormField>
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField label="Start Date">
+              <Input
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                disabled={isSubmitting}
+                error={formErrors.startDate}
+              />
+            </FormField>
+
+            <FormField label="End Date" error={formErrors.endDate}>
+              <Input
+                type="date"
+                value={formData.endDate}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                disabled={isSubmitting}
+                error={formErrors.endDate}
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField label="Budget" error={formErrors.budget}>
+              <Input
+                type="number"
+                value={formData.budget}
+                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                placeholder="0"
+                disabled={isSubmitting}
+                error={formErrors.budget}
+              />
+            </FormField>
+
+            <FormField label="Actual Spend" error={formErrors.actualSpend}>
+              <Input
+                type="number"
+                value={formData.actualSpend}
+                onChange={(e) => setFormData({ ...formData, actualSpend: e.target.value })}
+                placeholder="0"
+                disabled={isSubmitting}
+                error={formErrors.actualSpend}
+              />
+            </FormField>
+          </div>
 
           <FormField label="Team Members" description="Enter team member names separated by commas">
             <Input
