@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { format, parseISO } from 'date-fns';
+import Chart from 'react-apexcharts';
 import ApperIcon from '@/components/ApperIcon';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
@@ -14,9 +15,9 @@ import ErrorState from '@/components/molecules/ErrorState';
 import Spinner from '@/components/atoms/Spinner';
 import DeleteConfirmationModal from '@/components/organisms/DeleteConfirmationModal';
 import { projectService } from '@/services';
-
+import { chartService } from '@/services/api/chartService';
 const ProjectsPage = () => {
-  const [projects, setProjects] = useState([]);
+const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,7 +26,19 @@ const ProjectsPage = () => {
   const [editingProject, setEditingProject] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmProject, setDeleteConfirmProject] = useState(null);
-const [formData, setFormData] = useState({
+  
+  // Chart-related state
+  const [selectedChart, setSelectedChart] = useState(null);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [drillDownProject, setDrillDownProject] = useState(null);
+  const [isDrillDownOpen, setIsDrillDownOpen] = useState(false);
+  
+  // Chart refs for export functionality
+  const statusChartRef = useRef(null);
+  const budgetChartRef = useRef(null);
+  const spendChartRef = useRef(null);
+  
+  const [formData, setFormData] = useState({
     name: '',
     description: '',
     status: 'active',
@@ -38,7 +51,6 @@ const [formData, setFormData] = useState({
   const [formErrors, setFormErrors] = useState({});
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-
   // Real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -66,7 +78,7 @@ const [formData, setFormData] = useState({
   };
 
 // Metrics calculations
-  const getProjectMetrics = () => {
+const getProjectMetrics = () => {
     const totalProjects = projects.length;
     const activeProjects = projects.filter(p => p.status === 'active').length;
     const completedProjects = projects.filter(p => p.status === 'completed').length;
@@ -89,6 +101,84 @@ const [formData, setFormData] = useState({
     };
   };
 
+  // Chart data processing functions
+  const getChartData = () => {
+    const statusData = chartService.getStatusDistributionData(projects);
+    const budgetData = chartService.getBudgetAllocationData(projects);
+    const spendData = chartService.getSpendTrackingData(projects);
+    
+    return {
+      statusData,
+      budgetData,
+      spendData
+    };
+  };
+
+  // Handle chart element clicks for drill-down
+  const handleChartElementClick = (data) => {
+    if (data.projects && data.projects.length > 0) {
+      // For status distribution chart
+      setDrillDownProject({ 
+        type: 'status', 
+        status: data.status, 
+        projects: data.projects 
+      });
+    } else if (data.project) {
+      // For budget allocation chart
+      setDrillDownProject({ 
+        type: 'project', 
+        project: data.project 
+      });
+    }
+    setIsDrillDownOpen(true);
+  };
+
+  // Handle chart export
+  const handleExportChart = async (type, format) => {
+    setChartLoading(true);
+    try {
+      if (format === 'image') {
+        let chartRef;
+        switch (type) {
+          case 'status':
+            chartRef = statusChartRef;
+            break;
+          case 'budget':
+            chartRef = budgetChartRef;
+            break;
+          case 'spend':
+            chartRef = spendChartRef;
+            break;
+          default:
+            return;
+        }
+        await chartService.exportChartAsImage(chartRef, `${type}-chart`);
+        toast.success('Chart exported successfully!');
+      } else if (format === 'csv') {
+        const { statusData, budgetData, spendData } = getChartData();
+        let exportData;
+        switch (type) {
+          case 'status':
+            exportData = statusData;
+            break;
+          case 'budget':
+            exportData = budgetData;
+            break;
+          case 'spend':
+            exportData = spendData;
+            break;
+          default:
+            return;
+        }
+        chartService.exportDataAsCSV(exportData, `${type}-data`);
+        toast.success('Data exported successfully!');
+      }
+    } catch (error) {
+      toast.error(`Failed to export ${format}: ${error.message}`);
+    } finally {
+      setChartLoading(false);
+    }
+  };
   const validateForm = () => {
     const newErrors = {};
     
@@ -394,8 +484,7 @@ return (
             </div>
           </motion.div>
         </div>
-
-        {/* Filters */}
+{/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -425,6 +514,313 @@ return (
             </div>
           </div>
         </div>
+
+        {/* Interactive Charts Section */}
+        {projects.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Project Analytics</h2>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleExportChart('status', 'csv')}
+                  disabled={chartLoading}
+                  className="flex items-center gap-2"
+                >
+                  <ApperIcon name="Download" className="w-4 h-4" />
+                  Export Data
+                </Button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {/* Status Distribution Bar Chart */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Project Status Distribution</h3>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleExportChart('status', 'image')}
+                      disabled={chartLoading}
+                      className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Export as image"
+                    >
+                      <ApperIcon name="Camera" className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleExportChart('status', 'csv')}
+                      disabled={chartLoading}
+                      className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Export as CSV"
+                    >
+                      <ApperIcon name="FileSpreadsheet" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Spinner />
+                  </div>
+                ) : (
+                  <Chart
+                    ref={statusChartRef}
+                    options={chartService.getBarChartConfig(
+                      chartService.getStatusDistributionData(projects),
+                      handleChartElementClick
+                    )}
+                    series={chartService.getBarChartConfig(
+                      chartService.getStatusDistributionData(projects),
+                      handleChartElementClick
+                    ).series}
+                    type="bar"
+                    height={300}
+                  />
+                )}
+              </div>
+
+              {/* Budget Allocation Pie Chart */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Budget Allocation</h3>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleExportChart('budget', 'image')}
+                      disabled={chartLoading}
+                      className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Export as image"
+                    >
+                      <ApperIcon name="Camera" className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleExportChart('budget', 'csv')}
+                      disabled={chartLoading}
+                      className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Export as CSV"
+                    >
+                      <ApperIcon name="FileSpreadsheet" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Spinner />
+                  </div>
+                ) : (
+                  <Chart
+                    ref={budgetChartRef}
+                    options={chartService.getPieChartConfig(
+                      chartService.getBudgetAllocationData(projects),
+                      handleChartElementClick
+                    )}
+                    series={chartService.getPieChartConfig(
+                      chartService.getBudgetAllocationData(projects),
+                      handleChartElementClick
+                    ).series}
+                    type="pie"
+                    height={300}
+                  />
+                )}
+              </div>
+
+              {/* Spend Tracking Line Chart */}
+              <div className="bg-gray-50 rounded-lg p-4 lg:col-span-2 xl:col-span-1">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Spend Tracking</h3>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleExportChart('spend', 'image')}
+                      disabled={chartLoading}
+                      className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Export as image"
+                    >
+                      <ApperIcon name="Camera" className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleExportChart('spend', 'csv')}
+                      disabled={chartLoading}
+                      className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Export as CSV"
+                    >
+                      <ApperIcon name="FileSpreadsheet" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Spinner />
+                  </div>
+                ) : (
+                  <Chart
+                    ref={spendChartRef}
+                    options={chartService.getLineChartConfig(
+                      chartService.getSpendTrackingData(projects)
+                    )}
+                    series={chartService.getLineChartConfig(
+                      chartService.getSpendTrackingData(projects)
+                    ).series}
+                    type="line"
+                    height={300}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Drill-down Modal */}
+        <Modal
+          isOpen={isDrillDownOpen}
+          onClose={() => setIsDrillDownOpen(false)}
+          className="max-w-4xl"
+        >
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {drillDownProject?.type === 'status' 
+                  ? `${drillDownProject.status} Projects`
+                  : 'Project Details'
+                }
+              </h2>
+              <button
+                onClick={() => setIsDrillDownOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <ApperIcon name="X" className="w-6 h-6" />
+              </button>
+            </div>
+
+            {drillDownProject?.type === 'status' && (
+              <div className="space-y-4">
+                <p className="text-gray-600 mb-4">
+                  Found {drillDownProject.projects.length} project{drillDownProject.projects.length !== 1 ? 's' : ''} with status: {drillDownProject.status}
+                </p>
+                <div className="grid gap-4">
+                  {drillDownProject.projects.map(project => (
+                    <div key={project.id} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 mb-2">{project.name}</h3>
+                          <p className="text-gray-600 text-sm mb-3">{project.description}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">Budget:</span>
+                              <p className="font-medium">{formatCurrency(project.budget)}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Actual Spend:</span>
+                              <p className="font-medium">{formatCurrency(project.actualSpend)}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Start Date:</span>
+                              <p className="font-medium">{formatDate(project.startDate)}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">End Date:</span>
+                              <p className="font-medium">{formatDate(project.endDate)}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleEdit(project)}
+                            className="flex items-center gap-2"
+                          >
+                            <ApperIcon name="Edit2" className="w-4 h-4" />
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {drillDownProject?.type === 'project' && (
+              <div className="space-y-6">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                    {drillDownProject.project.name}
+                  </h3>
+                  <p className="text-gray-600 mb-6">{drillDownProject.project.description}</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <span className="text-sm text-gray-500">Status</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <ApperIcon 
+                            name={getStatusIcon(drillDownProject.project.status)} 
+                            className={`w-4 h-4 ${getStatusColor(drillDownProject.project.status)}`} 
+                          />
+                          <span className="font-medium capitalize">
+                            {drillDownProject.project.status.replace('-', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Budget</span>
+                        <p className="font-semibold text-lg">{formatCurrency(drillDownProject.project.budget)}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Actual Spend</span>
+                        <p className="font-semibold text-lg">{formatCurrency(drillDownProject.project.actualSpend)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <span className="text-sm text-gray-500">Start Date</span>
+                        <p className="font-medium">{formatDate(drillDownProject.project.startDate)}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">End Date</span>
+                        <p className="font-medium">{formatDate(drillDownProject.project.endDate)}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Team Members</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {drillDownProject.project.teamMembers.map((member, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {member}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => {
+                          handleEdit(drillDownProject.project);
+                          setIsDrillDownOpen(false);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <ApperIcon name="Edit2" className="w-4 h-4" />
+                        Edit Project
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setIsDrillDownOpen(false)}
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
 {/* Projects Table */}
         {sortedProjects.length === 0 ? (
           <EmptyState
