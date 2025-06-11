@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PageHeader from '@/components/organisms/PageHeader';
 import DealCard from '@/components/molecules/DealCard';
-import DealFormModal from '@/components/organisms/DealFormModal';
 import Spinner from '@/components/atoms/Spinner';
 import EmptyState from '@/components/molecules/EmptyState';
 import ErrorState from '@/components/molecules/ErrorState';
+import DealFormModal from '@/components/organisms/DealFormModal';
 import Button from '@/components/atoms/Button';
 import Select from '@/components/atoms/Select';
 import Input from '@/components/atoms/Input';
@@ -33,9 +33,9 @@ const DealsPage = () => {
   const [isAdmin, setIsAdmin] = useState(true);
 
   const stages = ['all', 'prospecting', 'qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'];
-  const salesReps = ['all', 'John Smith', 'Sarah Johnson', 'Mike Wilson', 'Emily Davis', 'David Brown'];
+const salesReps = ['all', 'John Smith', 'Sarah Johnson', 'Mike Wilson', 'Emily Davis', 'David Brown'];
   const regions = ['all', 'North America', 'Europe', 'Asia Pacific', 'Latin America'];
-const productCategories = ['all', 'Software', 'Hardware', 'Services', 'Consulting'];
+  const productCategories = ['all', 'Software', 'Hardware', 'Services', 'Consulting'];
 
   useEffect(() => {
     loadDeals();
@@ -44,11 +44,11 @@ const productCategories = ['all', 'Software', 'Hardware', 'Services', 'Consultin
       loadDeals();
     }, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+}, []);
+  
   useEffect(() => {
     filterAndSortDeals();
   }, [deals, searchQuery, sortBy, stageFilter, salesRepFilter, regionFilter, productCategoryFilter]);
-
   const loadDeals = async () => {
     try {
       setLoading(true);
@@ -61,9 +61,9 @@ const productCategories = ['all', 'Software', 'Hardware', 'Services', 'Consultin
     } finally {
       setLoading(false);
     }
-  };
+};
 
-const filterAndSortDeals = () => {
+  const filterAndSortDeals = () => {
     let filtered = [...deals];
 
     // Apply search filter
@@ -75,11 +75,10 @@ const filterAndSortDeals = () => {
       );
     }
 
-// Apply stage filter
+    // Apply stage filter
     if (stageFilter !== 'all') {
       filtered = filtered.filter(deal => deal?.stage === stageFilter);
     }
-
     // Apply sales rep filter
     if (salesRepFilter !== 'all') {
       filtered = filtered.filter(deal => deal?.salesRep === salesRepFilter);
@@ -94,9 +93,8 @@ const filterAndSortDeals = () => {
     if (productCategoryFilter !== 'all') {
       filtered = filtered.filter(deal => deal?.productCategory === productCategoryFilter);
     }
-
-    // Apply sorting
-filtered.sort((a, b) => {
+// Apply sorting
+    filtered.sort((a, b) => {
       switch (sortBy) {
         case 'value':
           return (b?.value || 0) - (a?.value || 0);
@@ -116,9 +114,9 @@ filtered.sort((a, b) => {
     });
 
     setFilteredDeals(filtered);
-  };
+};
 
-const calculateMetrics = () => {
+  const calculateMetrics = () => {
     const totalValue = filteredDeals.reduce((sum, deal) => sum + (deal?.value || 0), 0);
     const stageDistribution = stages.slice(1).reduce((acc, stage) => {
       acc[stage] = filteredDeals.filter(deal => deal?.stage === stage).length;
@@ -257,9 +255,7 @@ const calculateMetrics = () => {
         />
       </div>
     );
-  }
-
-  return (
+}
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -499,9 +495,9 @@ const calculateMetrics = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {currentDeals.map((deal) => (
+{currentDeals.map((deal) => (
                       <tr key={deal.id} className="hover:bg-gray-50">
-<td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">{deal?.title || 'N/A'}</div>
                             <div className="text-sm text-gray-500">{deal?.productCategory || 'N/A'}</div>
@@ -520,7 +516,7 @@ const calculateMetrics = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {deal?.closeDate ? new Date(deal.closeDate).toLocaleDateString() : 'N/A'}
                         </td>
-<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{deal?.probability || 0}%</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{deal?.probability || 0}%</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
                             <button
