@@ -1,16 +1,16 @@
 [
-  {
+{
     "id": "deal_001",
-    "title": "Figma Professional - Annual Subscription",
-    "description": "Complete design platform with advanced prototyping, design systems, and real-time collaboration. Used by top agencies like DesignStudio for creating award-winning dashboards. 'Figma transformed our workflow efficiency by 300%' - Sarah Chen, Lead Designer at WebFlow Agency.",
-    "category": "ui-tools",
-    "discountPercentage": 25,
-    "originalPrice": 144,
-    "salePrice": 108,
-    "expiryDate": "2024-12-31",
-    "projectLink": "/tools/figma-professional",
-    "image": "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop",
-    "featured": true,
+    "title": "Enterprise CRM Implementation - TechCorp",
+    "description": "Complete CRM solution for TechCorp including software licensing, implementation, training, and ongoing support. Multi-year contract with potential for expansion.",
+    "value": 450000,
+    "stage": "proposal",
+    "salesRep": "John Smith",
+    "region": "North America",
+    "productCategory": "Software",
+    "probability": 75,
+    "closeDate": "2024-03-15",
+    "notes": "Decision maker meeting scheduled for next week. Strong interest shown.",
     "createdAt": "2024-01-15T10:00:00Z",
     "updatedAt": "2024-01-15T10:00:00Z"
   },

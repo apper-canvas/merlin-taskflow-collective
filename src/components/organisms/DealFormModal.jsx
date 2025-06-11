@@ -8,89 +8,87 @@ import Button from '@/components/atoms/Button';
 import ApperIcon from '@/components/ApperIcon';
 
 const DealFormModal = ({ deal, onSave, onClose }) => {
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'residential',
-    discountPercentage: '',
-    originalPrice: '',
-    salePrice: '',
-    expiryDate: '',
-    projectLink: '',
-    image: '',
-    featured: false
+    value: '',
+    stage: 'prospecting',
+    salesRep: '',
+    region: '',
+    productCategory: 'Software',
+    probability: '',
+    closeDate: '',
+    notes: ''
   });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  const categories = [
-    { value: 'residential', label: 'Residential' },
-    { value: 'commercial', label: 'Commercial' },
-    { value: 'renovation', label: 'Renovation' },
-    { value: 'landscaping', label: 'Landscaping' }
+const stages = [
+    { value: 'prospecting', label: 'Prospecting' },
+    { value: 'qualification', label: 'Qualification' },
+    { value: 'proposal', label: 'Proposal' },
+    { value: 'negotiation', label: 'Negotiation' },
+    { value: 'closed-won', label: 'Closed Won' },
+    { value: 'closed-lost', label: 'Closed Lost' }
   ];
 
-  useEffect(() => {
+  const salesReps = ['John Smith', 'Sarah Johnson', 'Mike Wilson', 'Emily Davis', 'David Brown'];
+  const regions = ['North America', 'Europe', 'Asia Pacific', 'Latin America'];
+  const productCategories = ['Software', 'Hardware', 'Services', 'Consulting'];
+
+useEffect(() => {
     if (deal) {
       setFormData({
         title: deal.title || '',
         description: deal.description || '',
-        category: deal.category || 'residential',
-        discountPercentage: deal.discountPercentage?.toString() || '',
-        originalPrice: deal.originalPrice?.toString() || '',
-        salePrice: deal.salePrice?.toString() || '',
-        expiryDate: deal.expiryDate ? deal.expiryDate.split('T')[0] : '',
-        projectLink: deal.projectLink || '',
-        image: deal.image || '',
-        featured: deal.featured || false
+        value: deal.value?.toString() || '',
+        stage: deal.stage || 'prospecting',
+        salesRep: deal.salesRep || '',
+        region: deal.region || '',
+        productCategory: deal.productCategory || 'Software',
+        probability: deal.probability?.toString() || '',
+        closeDate: deal.closeDate ? deal.closeDate.split('T')[0] : '',
+        notes: deal.notes || ''
       });
     }
   }, [deal]);
 
-  const validateForm = () => {
+const validateForm = () => {
     const newErrors = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = 'Deal title is required';
     }
 
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
     }
 
-    if (!formData.discountPercentage || formData.discountPercentage < 1 || formData.discountPercentage > 99) {
-      newErrors.discountPercentage = 'Discount must be between 1 and 99%';
+    if (!formData.value || formData.value < 0) {
+      newErrors.value = 'Deal value is required and must be positive';
     }
 
-    if (!formData.salePrice || formData.salePrice < 0) {
-      newErrors.salePrice = 'Sale price is required and must be positive';
+    if (!formData.salesRep.trim()) {
+      newErrors.salesRep = 'Sales rep is required';
     }
 
-    if (formData.originalPrice && formData.originalPrice < formData.salePrice) {
-      newErrors.originalPrice = 'Original price must be higher than sale price';
+    if (!formData.region.trim()) {
+      newErrors.region = 'Region is required';
     }
 
-    if (!formData.expiryDate) {
-      newErrors.expiryDate = 'Expiry date is required';
-    } else {
-      const expiryDate = new Date(formData.expiryDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (expiryDate < today) {
-        newErrors.expiryDate = 'Expiry date must be in the future';
-      }
+    if (!formData.probability || formData.probability < 0 || formData.probability > 100) {
+      newErrors.probability = 'Probability must be between 0 and 100%';
     }
 
-    if (!formData.projectLink.trim()) {
-      newErrors.projectLink = 'Project link is required';
+    if (!formData.closeDate) {
+      newErrors.closeDate = 'Expected close date is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -101,10 +99,9 @@ const DealFormModal = ({ deal, onSave, onClose }) => {
     try {
       const dealData = {
         ...formData,
-        discountPercentage: parseInt(formData.discountPercentage),
-        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
-        salePrice: parseFloat(formData.salePrice),
-        expiryDate: formData.expiryDate
+        value: parseFloat(formData.value),
+        probability: parseInt(formData.probability),
+        closeDate: formData.closeDate
       };
 
       await onSave(dealData);
@@ -124,7 +121,7 @@ const DealFormModal = ({ deal, onSave, onClose }) => {
     }
   };
 
-  return (
+return (
     <Modal
       isOpen={true}
       onClose={onClose}
@@ -133,7 +130,7 @@ const DealFormModal = ({ deal, onSave, onClose }) => {
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Title */}
+          {/* Deal Title */}
           <div className="md:col-span-2">
             <Input
               label="Deal Title"
@@ -151,121 +148,136 @@ const DealFormModal = ({ deal, onSave, onClose }) => {
               label="Description"
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Describe the deal..."
+              placeholder="Describe the deal opportunity..."
               rows={3}
               error={errors.description}
               required
             />
           </div>
 
-          {/* Category */}
+          {/* Deal Value */}
+          <div>
+            <Input
+              label="Deal Value"
+              type="number"
+              value={formData.value}
+              onChange={(e) => handleChange('value', e.target.value)}
+              placeholder="100000"
+              min="0"
+              step="1000"
+              error={errors.value}
+              required
+            />
+          </div>
+
+          {/* Stage */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category
+              Stage
             </label>
             <Select
-              value={formData.category}
-              onChange={(e) => handleChange('category', e.target.value)}
+              value={formData.stage}
+              onChange={(e) => handleChange('stage', e.target.value)}
             >
-              {categories.map(category => (
-                <option key={category.value} value={category.value}>
-                  {category.label}
+              {stages.map(stage => (
+                <option key={stage.value} value={stage.value}>
+                  {stage.label}
                 </option>
               ))}
             </Select>
           </div>
 
-          {/* Discount Percentage */}
+          {/* Sales Rep */}
           <div>
-            <Input
-              label="Discount Percentage"
-              type="number"
-              value={formData.discountPercentage}
-              onChange={(e) => handleChange('discountPercentage', e.target.value)}
-              placeholder="10"
-              min="1"
-              max="99"
-              error={errors.discountPercentage}
-              required
-            />
-          </div>
-
-          {/* Original Price */}
-          <div>
-            <Input
-              label="Original Price (Optional)"
-              type="number"
-              value={formData.originalPrice}
-              onChange={(e) => handleChange('originalPrice', e.target.value)}
-              placeholder="100000"
-              min="0"
-              step="1000"
-              error={errors.originalPrice}
-            />
-          </div>
-
-          {/* Sale Price */}
-          <div>
-            <Input
-              label="Sale Price"
-              type="number"
-              value={formData.salePrice}
-              onChange={(e) => handleChange('salePrice', e.target.value)}
-              placeholder="90000"
-              min="0"
-              step="1000"
-              error={errors.salePrice}
-              required
-            />
-          </div>
-
-          {/* Expiry Date */}
-          <div>
-            <Input
-              label="Expiry Date"
-              type="date"
-              value={formData.expiryDate}
-              onChange={(e) => handleChange('expiryDate', e.target.value)}
-              error={errors.expiryDate}
-              required
-            />
-          </div>
-
-          {/* Project Link */}
-          <div>
-            <Input
-              label="Project Link"
-              value={formData.projectLink}
-              onChange={(e) => handleChange('projectLink', e.target.value)}
-              placeholder="/projects/luxury-home"
-              error={errors.projectLink}
-              required
-            />
-          </div>
-
-          {/* Image URL */}
-          <div className="md:col-span-2">
-            <Input
-              label="Image URL (Optional)"
-              value={formData.image}
-              onChange={(e) => handleChange('image', e.target.value)}
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          {/* Featured Toggle */}
-          <div className="md:col-span-2">
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={formData.featured}
-                onChange={(e) => handleChange('featured', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-700">
-                Featured Deal
-              </span>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Sales Rep
             </label>
+            <Select
+              value={formData.salesRep}
+              onChange={(e) => handleChange('salesRep', e.target.value)}
+              error={errors.salesRep}
+            >
+              <option value="">Select sales rep...</option>
+              {salesReps.map(rep => (
+                <option key={rep} value={rep}>
+                  {rep}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {/* Region */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Region
+            </label>
+            <Select
+              value={formData.region}
+              onChange={(e) => handleChange('region', e.target.value)}
+              error={errors.region}
+            >
+              <option value="">Select region...</option>
+              {regions.map(region => (
+                <option key={region} value={region}>
+                  {region}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {/* Product Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Product Category
+            </label>
+            <Select
+              value={formData.productCategory}
+              onChange={(e) => handleChange('productCategory', e.target.value)}
+            >
+              {productCategories.map(category => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {/* Probability */}
+          <div>
+            <Input
+              label="Probability (%)"
+              type="number"
+              value={formData.probability}
+              onChange={(e) => handleChange('probability', e.target.value)}
+              placeholder="75"
+              min="0"
+              max="100"
+              error={errors.probability}
+              required
+            />
+          </div>
+
+          {/* Expected Close Date */}
+          <div>
+            <Input
+              label="Expected Close Date"
+              type="date"
+              value={formData.closeDate}
+              onChange={(e) => handleChange('closeDate', e.target.value)}
+              error={errors.closeDate}
+              required
+            />
+          </div>
+
+          {/* Notes */}
+          <div className="md:col-span-2">
+            <Textarea
+              label="Notes (Optional)"
+              value={formData.notes}
+              onChange={(e) => handleChange('notes', e.target.value)}
+              placeholder="Additional notes about this deal..."
+              rows={3}
+            />
           </div>
         </div>
 

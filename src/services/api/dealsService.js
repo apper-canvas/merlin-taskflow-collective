@@ -24,7 +24,7 @@ export const dealsService = {
   },
 
   // Create new deal
-  async create(dealData) {
+async create(dealData) {
     await delay(400);
     
     const newDeal = {
@@ -38,7 +38,7 @@ export const dealsService = {
     return { ...newDeal };
   },
 
-  // Update existing deal
+// Update existing deal
   async update(id, dealData) {
     await delay(400);
     
